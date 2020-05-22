@@ -1,0 +1,25 @@
+study(title="Correlation with other data series",
+     shorttitle="Correlation")
+
+// Add the inputs
+otherDataSeries = input(title="Other data series", type=symbol,
+     defval="EURUSD")
+
+sourceType = input(title="Source type", type=source, defval=close)
+
+corLength = input(title="Correlation length", type=integer,
+     defval=20, minval=5)
+
+emaLength = input(title="EMA length", type=integer,
+     defval=12, minval=5)
+
+// Get the additional data series
+otherSymbol = security(otherDataSeries, period, sourceType)
+
+// Calculate correlation and EMA
+corr = correlation(sourceType, otherSymbol, corLength)
+emaCorr = ema(corr, emaLength)
+
+// Plot values
+plot(series=corr)
+plot(series=emaCorr, color=orange)
