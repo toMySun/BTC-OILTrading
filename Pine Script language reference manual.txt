@@ -1,0 +1,4064 @@
+Pine Script language reference manual
+
+
+Language Operators
+!=
+Not equal to. Applicable to expressions of any type.
+expr1 != expr2
+RETURNS
+Boolean value, or series of boolean values.
+%
+Modulo (integer remainder). Applicable to numerical expressions.
+expr1 % expr2
+RETURNS
+Integer or float value, or series of values
+*
+Multiplication. Applicable to numerical expressions.
+expr1 * expr2
+RETURNS
+Integer or float value, or series of values
++
+Addition or unary plus. Applicable to numerical expressions or strings.
+expr1 + expr2
++ expr
+RETURNS
+Binary `+` for strings returns concatenation of expr1 and expr2
+For numbers returns integer or float value, or series of values:
+Binary `+` returns expr1 plus expr2.
+Unary `+` returns expr (does nothing added just for the symmetry with the unary - operator).
+REMARKS
+You may use arithmetic operators with numbers as well as with series variables. In case of usage with series the operators are applied elementwise.
+-
+Subtraction or unary minus. Applicable to numerical expressions.
+expr1 - expr2
+- expr
+RETURNS
+Returns integer or float value, or series of values:
+Binary `-` returns expr1 minus expr2.
+Unary `-` returns the negation of expr.
+REMARKS
+You may use arithmetic operators with numbers as well as with series variables. In case of usage with series the operators are applied elementwise.
+/
+Division. Applicable to numerical expressions.
+expr1 / expr2
+RETURNS
+Integer or float value, or series of values
+<
+Less than. Applicable to numerical expressions.
+expr1 < expr2
+RETURNS
+Boolean value, or series of boolean values.
+<=
+Less than or equal to. Applicable to numerical expressions.
+expr1 <= expr2
+RETURNS
+Boolean value, or series of boolean values.
+==
+Equal to. Applicable to expressions of any type.
+expr1 == expr2
+RETURNS
+Boolean value, or series of boolean values.
+>
+Greater than. Applicable to numerical expressions.
+expr1 > expr2
+RETURNS
+Boolean value, or series of boolean values.
+>=
+Greater than or equal to. Applicable to numerical expressions.
+expr1 >= expr2
+RETURNS
+Boolean value, or series of boolean values.
+?:
+Ternary conditional operator.
+expr1 ? expr2 : expr3
+EXAMPLE
+// Draw circles at the bars where open crosses close
+s2 = cross(open, close) ? avg(open,close) : na
+plot(s2, style=plot.style_circles, linewidth=2, color=color.red)
+
+// Combination of ?: operators for 'switch'-like logic
+c = timeframe.isintraday ? color.red : timeframe.isdaily ? color.green : timeframe.isweekly ? color.blue : color.gray
+plot(hl2, color=c)
+RETURNS
+expr2 if expr1 is evaluated to true, expr3 otherwise. Zero value (0 and also NaN, +Infinity, -Infinity) is considered to be false, any other value is true.
+REMARKS
+Use na for 'else' branch if you do not need it.
+You can combine two or more ?: operators to achieve 'switch'-like statement effect (see examples below).
+You may use arithmetic operators with numbers as well as with series variables. In case of usage with series the operators are applied elementwise.
+SEE ALSO
+iffna
+[]
+Series subscript. Provides access to previous values of series expr1. expr2 is the number of bars back, and must be numerical. Floats will be rounded down.
+expr1[expr2]
+EXAMPLE
+// [] can be used to "save" variable value between bars
+a = 0.0 // declare `a`
+a := a[1] // immediately set current value to the same as previous. `na` in the beginning of history
+if high == low // if some condition - change `a` value to another
+    a := low
+RETURNS
+A series of values
+SEE ALSO
+floor
+and
+Logical AND. Applicable to boolean expressions.
+expr1 and expr2
+RETURNS
+Boolean value, or series of boolean values.
+for
+For statement allows to execute a number of instructions repeatedly.
+To have access to and use the for statement, one should specify the version >= 2 of Pine Script language in the very first line of code, for example: //@version=4
+var_declarationX = for counter = from_num to to_num [by step_num]
+  var_decl0
+  var_decl1
+  …
+  continue
+  …
+  break
+  …
+  var_declN
+  return_expression
+where:
+counter - a variable, loop counter.
+from_num - start value of the counter
+to_num - end value of the counter. When the counter becomes greater than to_num (or less than to_num in case from_num > to_num) the loop is broken.
+step_num - loop step. Can be omitted (in the case loop step = 1). If from_num is greater than to_num loop step will change direction automatically, no need to specify negative numbers.
+var_decl0, … var_declN, return_expression - body of the loop. It must be shifted by 4 spaces or 1 tab.
+return_expression - returning value. When a loop is finished or broken, the returning value is given to the var_declarationX.
+continue - a keyword. Can be used only in loops. It switches the loop to next iteration.
+break - a keyword. Can be used only in loops. It breaks the loop.
+EXAMPLE
+//@version=4
+study("My sma")
+my_sma(price, length) =>
+    sum = price
+    for i = 1 to length-1
+        sum := sum + price[i]
+    sum / length
+plot(my_sma(close,14))
+REMARKS
+Variable ‘sum’ is a mutable variable and a new value can be given to it by an operator := in body of the loop. Also note that we recommend to use a built-in function sma for Moving Average as it calculates faster.
+SEE ALSO
+sum
+if
+If statement defines what block of statements must be executed when conditions of the expression are satisfied.
+To have access to and use the if statement, one should specify the version >= 2 of Pine Script language in the very first line of code, for example: //@version=4
+General code form:
+var_declarationX = if condition
+  var_decl_then0
+  var_decl_then1
+  …
+  var_decl_thenN
+else
+  var_decl_else0
+  var_decl_else1
+  …
+  var_decl_elseN
+  return_expression_else
+where
+var_declarationX — this variable gets the value of the if statement
+condition — if the condition is true, the logic from the block then (var_decl_then0, var_decl_then1, etc) is used, if the condition is false, the logic from the block ‘else’ (var_decl_else0, var_decl_else1, etc) is used.
+return_expression_then, return_expression_else — the last expression from the block then or from the block else will return the final value of the statement. If declaration of the variable is in the end, its value will be the result.
+The type of returning value of the if statement depends on return_expression_then and return_expression_else type (their types must match: it is not possible to return an integer value from then, while you have a string value in else block).
+EXAMPLE
+// This code compiles
+x = if close > open
+    close
+else
+    open
+// This code doesn’t compile
+else
+x = if close > open
+    close
+else
+    "open"
+It is possible to omit the else block. In this case if the condition is false, an “empty” value (na, or false, or “”) will be assigned to the var_declarationX variable.:
+EXAMPLE
+x = if close > open
+    close
+// If current close > current open, then x = close.
+// Otherwise the x = na.
+The blocks “then” and “else” are shifted by 4 spaces. If statements can include each other, +4 spaces:
+EXAMPLE
+x = if close > open
+    b = if close > close[1]
+        close
+    else
+        close[1]
+    b
+else
+    open
+It is possible to ignore the resulting value of an if statement (“var_declarationX=“ can be omited). It may be useful if you need the side effect of the expression, for example in strategy trading:
+EXAMPLE
+if (crossover(source, lower))
+    strategy.entry("BBandLE", strategy.long, stop=lower,
+        oca_name="BollingerBands",
+    oca_type=strategy.oca.cancel, comment="BBandLE")
+else
+    strategy.cancel(id="BBandLE")
+not
+Logical negation (NOT). Applicable to boolean expressions.
+not expr1
+RETURNS
+Boolean value, or series of boolean values.
+or
+Logical OR. Applicable to boolean expressions.
+expr1 or expr2
+RETURNS
+Boolean value, or series of boolean values.
+var
+var is the keyword used for assigning and one-time initializing of the variable.
+Normally, a syntax of assignment of variables, which doesn’t include the keyword var, results in the value of the variable being overwritten with every update of the data. Contrary to that, when assigning variables with the keyword var, they can “keep the state” despite the data updating, only changing it when conditions within if-expressions are met.
+Available starting from version 4.
+var variable_name = expression
+where:
+variable_name - any name of the user’s variable that’s allowed in Pine Script (can contain capital and lowercase Latin characters, numbers, and underscores (_), but can’t start with a number).
+expression - any arithmetic expression, just as with defining a regular variable. The expression will be calculated and assigned to a variable once.
+EXAMPLE
+//@version=4
+study("Var keyword example")
+var a = close
+var b = 0.0
+var c = 0.0
+var green_bars_count = 0
+if close > open
+	var x = close
+	b := x
+	green_bars_count := green_bars_count + 1
+	if green_bars_count >= 10
+		var y = close
+		c := y
+plot(a)
+plot(b)
+plot(c)
+The variable ‘a‘ keeps the closing price of the first bar for each bar in the series.
+The variable ‘b‘ keeps the closing price of the first “green” bar in the series.
+The variable ‘c‘ keeps the closing price of the tenth “green” bar in the series.
+Built-In Variables
+accdist
+Accumulation/distribution index.
+TYPE
+float
+adjustment.dividends
+Constant for dividends adjustment type (dividends adjustment is applied).
+TYPE
+string
+SEE ALSO
+adjustment.noneadjustment.splitstickerid
+adjustment.none
+Constant for none adjustment type (no adjustment is applied).
+TYPE
+string
+SEE ALSO
+adjustment.splitsadjustment.dividendstickerid
+adjustment.splits
+Constant for splits adjustment type (splits adjustment is applied).
+TYPE
+string
+SEE ALSO
+adjustment.noneadjustment.dividendstickerid
+bar_index
+Current bar index. Numbering is zero-based, index of the first bar is 0.
+TYPE
+integer
+EXAMPLE
+plot(bar_index)
+plot(bar_index > 5000 ? close : 0)
+REMARKS
+Note that bar_index has replaced n variable in version 4.
+barmerge.gaps_off
+Merge strategy for requested data. Data is merged continuously without gaps, all the gaps are filled with the previous nearest existing value.
+TYPE
+bool
+SEE ALSO
+securitybarmerge.gaps_on
+barmerge.gaps_on
+Merge strategy for requested data. Data is merged with possible gaps (na values).
+TYPE
+bool
+SEE ALSO
+securitybarmerge.gaps_off
+barmerge.lookahead_off
+Merge strategy for the requested data position. Requested barset is merged with current barset in the order of sorting bars by their close time. This merge strategy disables effect of getting data from "future" on calculation on history.
+TYPE
+bool
+SEE ALSO
+securitybarmerge.lookahead_on
+barmerge.lookahead_on
+Merge strategy for the requested data position. Requested barset is merged with current barset in the order of sorting bars by their opening time. This merge strategy can lead to undesirable effect of getting data from "future" on calculation on history. This is unacceptable in backtesting strategies, but can be useful in indicators.
+TYPE
+bool
+SEE ALSO
+securitybarmerge.lookahead_off
+barstate.isconfirmed
+Returns true if the script is calculating the last (closing) update of the current bar. The next script calculation will be on the new bar data.
+TYPE
+bool
+REMARKS
+PineScript code that uses this variable could calculate differently on history and real-time data.
+It is NOT recommended to use barstate.isconfirmed in security expression. Its value requested from security is unpredictable.
+SEE ALSO
+barstate.isfirstbarstate.islastbarstate.ishistorybarstate.isrealtimebarstate.isnew
+barstate.isfirst
+Returns true if current bar is first bar in barset, false otherwise.
+TYPE
+bool
+REMARKS
+PineScript code that uses this variable could calculate differently on history and real-time data.
+SEE ALSO
+barstate.islastbarstate.ishistorybarstate.isrealtimebarstate.isnewbarstate.isconfirmed
+barstate.ishistory
+Returns true if current bar is a historical bar, false otherwise.
+TYPE
+bool
+REMARKS
+PineScript code that uses this variable could calculate differently on history and real-time data.
+SEE ALSO
+barstate.isfirstbarstate.islastbarstate.isrealtimebarstate.isnewbarstate.isconfirmed
+barstate.islast
+Returns true if current bar is the last bar in barset, false otherwise. This condition is true for all real-time bars in barset.
+TYPE
+bool
+REMARKS
+PineScript code that uses this variable could calculate differently on history and real-time data.
+SEE ALSO
+barstate.isfirstbarstate.ishistorybarstate.isrealtimebarstate.isnewbarstate.isconfirmed
+barstate.isnew
+Returns true if script is currently calculating on new bar, false otherwise. This variable is true when calculating on historical bars or on first update of a newly generated real-time bar.
+TYPE
+bool
+REMARKS
+PineScript code that uses this variable could calculate differently on history and real-time data.
+SEE ALSO
+barstate.isfirstbarstate.islastbarstate.ishistorybarstate.isrealtimebarstate.isconfirmed
+barstate.isrealtime
+Returns true if current bar is a real-time bar, false otherwise.
+TYPE
+bool
+REMARKS
+PineScript code that uses this variable could calculate differently on history and real-time data.
+SEE ALSO
+barstate.isfirstbarstate.islastbarstate.ishistorybarstate.isnewbarstate.isconfirmed
+close
+Current close price.
+TYPE
+float
+REMARKS
+Previous values may be accessed with square brackets operator [], e.g. close[1], close[2].
+SEE ALSO
+openhighlowvolumetimehl2hlc3ohlc4
+color.aqua
+Is a named constant for #00BCD4 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.orange
+color.black
+Is a named constant for #363A45 color.
+TYPE
+color
+SEE ALSO
+color.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.blue
+Is a named constant for #2196F3 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.tealcolor.aquacolor.orange
+color.fuchsia
+Is a named constant for #E040FB color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.gray
+Is a named constant for #787B86 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.green
+Is a named constant for #4CAF50 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.lime
+Is a named constant for #00E676 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.maroon
+Is a named constant for #880E4F color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.navy
+Is a named constant for #311B92 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.bluecolor.tealcolor.aquacolor.orange
+color.olive
+Is a named constant for #808000 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.orange
+Is a named constant for #FF9800 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aqua
+color.purple
+Is a named constant for #9C27B0 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.red
+Is a named constant for #FF5252 color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.silver
+Is a named constant for #B2B5BE color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.teal
+Is a named constant for #00897B color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.aquacolor.orange
+color.white
+Is a named constant for #FFFFFF color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.yellowcolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+color.yellow
+Is a named constant for #FFEB3B color.
+TYPE
+color
+SEE ALSO
+color.blackcolor.silvercolor.graycolor.whitecolor.marooncolor.redcolor.purplecolor.fuchsiacolor.greencolor.limecolor.olivecolor.navycolor.bluecolor.tealcolor.aquacolor.orange
+currency.AUD
+ Australian dollar.
+TYPE
+string
+SEE ALSO
+strategy
+currency.CAD
+Canadian dollar.
+TYPE
+string
+SEE ALSO
+strategy
+currency.CHF
+Swiss franc.
+TYPE
+string
+SEE ALSO
+strategy
+currency.EUR
+Euro.
+TYPE
+string
+SEE ALSO
+strategy
+currency.GBP
+Pound sterling.
+TYPE
+string
+SEE ALSO
+strategy
+currency.HKD
+Hong Kong dollar.
+TYPE
+string
+SEE ALSO
+strategy
+currency.JPY
+Japanese yen.
+TYPE
+string
+SEE ALSO
+strategy
+currency.NOK
+Norwegian krone.
+TYPE
+string
+SEE ALSO
+strategy
+currency.NONE
+Unspecified currency.
+TYPE
+string
+SEE ALSO
+strategy
+currency.NZD
+New Zealand dollar.
+TYPE
+string
+SEE ALSO
+strategy
+currency.RUB
+Russian ruble.
+TYPE
+string
+SEE ALSO
+strategy
+currency.SEK
+Swedish krona.
+TYPE
+string
+SEE ALSO
+strategy
+currency.SGD
+Singapore dollar.
+TYPE
+string
+SEE ALSO
+strategy
+currency.TRY
+Turkish lira.
+TYPE
+string
+SEE ALSO
+strategy
+currency.USD
+United States dollar.
+TYPE
+string
+SEE ALSO
+strategy
+currency.ZAR
+South African rand.
+TYPE
+string
+SEE ALSO
+strategy
+dayofmonth
+Date of current bar time in exchange timezone.
+TYPE
+integer
+SEE ALSO
+dayofmonthtimeyearmonthweekofyeardayofweekhourminutesecond
+dayofweek
+Day of week for current bar time in exchange timezone.
+TYPE
+integer
+REMARKS
+You can use dayofweek.sunday, dayofweek.monday, dayofweek.tuesday, dayofweek.wednesday, dayofweek.thursday, dayofweek.friday and dayofweek.saturday variables for comparisons.
+SEE ALSO
+dayofweektimeyearmonthweekofyeardayofmonthhourminutesecond
+dayofweek.friday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.sundaydayofweek.mondaydayofweek.tuesdaydayofweek.wednesdaydayofweek.thursdaydayofweek.saturday
+dayofweek.monday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.sundaydayofweek.tuesdaydayofweek.wednesdaydayofweek.thursdaydayofweek.fridaydayofweek.saturday
+dayofweek.saturday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.sundaydayofweek.mondaydayofweek.tuesdaydayofweek.wednesdaydayofweek.thursdaydayofweek.friday
+dayofweek.sunday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.mondaydayofweek.tuesdaydayofweek.wednesdaydayofweek.thursdaydayofweek.fridaydayofweek.saturday
+dayofweek.thursday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.sundaydayofweek.mondaydayofweek.tuesdaydayofweek.wednesdaydayofweek.fridaydayofweek.saturday
+dayofweek.tuesday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.sundaydayofweek.mondaydayofweek.wednesdaydayofweek.thursdaydayofweek.fridaydayofweek.saturday
+dayofweek.wednesday
+Is a named constant for return value of dayofweek function and value of dayofweek variable.
+TYPE
+integer
+SEE ALSO
+dayofweek.sundaydayofweek.mondaydayofweek.tuesdaydayofweek.thursdaydayofweek.fridaydayofweek.saturday
+display.all
+A named constant that specifies where the plot is displayed. Display everywhere.
+TYPE
+integer
+SEE ALSO
+plotplotshapeplotcharplotarrowplotbarplotcandle
+display.none
+A named constant that specifies where the plot is displayed. Display nowhere. Available in alert template message
+TYPE
+integer
+SEE ALSO
+plotplotshapeplotcharplotarrowplotbarplotcandle
+extend.both
+A named constant for line.new and line.set_extend functions
+TYPE
+string
+SEE ALSO
+line.newline.set_extendextend.noneextend.leftextend.right
+extend.left
+A named constant for line.new and line.set_extend functions
+TYPE
+string
+SEE ALSO
+line.newline.set_extendextend.noneextend.rightextend.both
+extend.none
+A named constant for line.new and line.set_extend functions
+TYPE
+string
+SEE ALSO
+line.newline.set_extendextend.leftextend.rightextend.both
+extend.right
+A named constant for line.new and line.set_extend functions
+TYPE
+string
+SEE ALSO
+line.newline.set_extendextend.noneextend.leftextend.both
+format.inherit
+Is a named constant for selecting the formatting of the script output values from the parent series in the study function.
+TYPE
+string
+SEE ALSO
+studyformat.priceformat.volume
+format.price
+Is a named constant for selecting the formatting of the script output values as prices in the study function.
+TYPE
+string
+REMARKS
+If format is format.price, default precision value is set. You can use the precision argument of study function to change the precision value.
+SEE ALSO
+studyformat.inheritformat.volume
+format.volume
+Is a named constant for selecting the formatting of the script output values as volume in the study function, e.g. '5183' will be formatted as '5K'
+TYPE
+string
+SEE ALSO
+studyformat.inheritformat.price
+high
+Current high price.
+TYPE
+float
+REMARKS
+Previous values may be accessed with square brackets operator [], e.g. high[1], high[2].
+SEE ALSO
+openlowclosevolumetimehl2hlc3ohlc4
+hl2
+Is a shortcut for (high + low)/2
+TYPE
+float
+SEE ALSO
+openhighlowclosevolumetimehlc3ohlc4
+hlc3
+Is a shortcut for (high + low + close)/3
+TYPE
+float
+SEE ALSO
+openhighlowclosevolumetimehl2ohlc4
+hline.style_dashed
+Is a named constant for dashed linestyle of hline function.
+TYPE
+integer
+SEE ALSO
+hline.style_solidhline.style_dotted
+hline.style_dotted
+Is a named constant for dotted linestyle of hline function.
+TYPE
+integer
+SEE ALSO
+hline.style_solidhline.style_dashed
+hline.style_solid
+Is a named constant for solid linestyle of hline function.
+TYPE
+integer
+SEE ALSO
+hline.style_dottedhline.style_dashed
+hour
+Current bar hour in exchange timezone.
+TYPE
+integer
+SEE ALSO
+hourtimeyearmonthweekofyeardayofmonthdayofweekminutesecond
+iii
+Intraday Intensity Index
+TYPE
+float
+EXAMPLE
+study('My Script')
+plot(iii, color=color.yellow)
+
+// the same on pine
+f_iii() =>
+    return = (2 * close - high - low) / ((high - low) * volume)
+
+plot(f_iii())
+input.bool
+Is a named constant for bool input type of input function.
+TYPE
+string
+SEE ALSO
+input.integerinput.floatinput.stringinput.symbolinput.resolutioninput.sessioninput.sourceinput
+input.float
+Is a named constant for float input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.integerinput.stringinput.symbolinput.resolutioninput.sessioninput.sourceinput
+input.integer
+Is a named constant for integer input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.floatinput.stringinput.symbolinput.resolutioninput.sessioninput.sourceinput
+input.resolution
+Is a named constant for resolution input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.integerinput.floatinput.stringinput.symbolinput.sessioninput.sourceinput
+input.session
+Is a named constant for session input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.integerinput.floatinput.stringinput.symbolinput.resolutioninput.sourceinput
+input.source
+Is a named constant for source input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.integerinput.floatinput.stringinput.symbolinput.resolutioninput.sessioninput
+input.string
+Is a named constant for string input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.integerinput.floatinput.symbolinput.resolutioninput.sessioninput.sourceinput
+input.symbol
+Is a named constant for symbol input type of input function.
+TYPE
+string
+SEE ALSO
+input.boolinput.integerinput.floatinput.stringinput.resolutioninput.sessioninput.sourceinput
+label.style_arrowdown
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_arrowup
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_circle
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_cross
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_diamond
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_square
+label.style_flag
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_label_center
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_squarelabel.style_diamond
+label.style_label_down
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_label_left
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_label_right
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_label_up
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_none
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_square
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_diamond
+label.style_triangledown
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangleuplabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_triangleup
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_xcrosslabel.style_crosslabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+label.style_xcross
+Label style for label.new and label.set_style functions
+TYPE
+string
+SEE ALSO
+label.newlabel.set_stylelabel.set_textalignlabel.style_nonelabel.style_crosslabel.style_triangleuplabel.style_triangledownlabel.style_flaglabel.style_circlelabel.style_arrowuplabel.style_arrowdownlabel.style_label_uplabel.style_label_downlabel.style_label_leftlabel.style_label_rightlabel.style_label_centerlabel.style_squarelabel.style_diamond
+line.style_arrow_both
+Line style for line.new and line.set_style functions. Solid line with arrows on both points
+TYPE
+string
+SEE ALSO
+line.newline.set_styleline.style_solidline.style_dottedline.style_dashedline.style_arrow_leftline.style_arrow_right
+line.style_arrow_left
+Line style for line.new and line.set_style functions. Solid line with arrow on the first point
+TYPE
+string
+SEE ALSO
+line.newline.set_styleline.style_solidline.style_dottedline.style_dashedline.style_arrow_rightline.style_arrow_both
+line.style_arrow_right
+Line style for line.new and line.set_style functions. Solid line with arrow on the second point
+TYPE
+string
+SEE ALSO
+line.newline.set_styleline.style_solidline.style_dottedline.style_dashedline.style_arrow_leftline.style_arrow_both
+line.style_dashed
+Line style for line.new and line.set_style functions
+TYPE
+string
+SEE ALSO
+line.newline.set_styleline.style_solidline.style_dottedline.style_arrow_leftline.style_arrow_rightline.style_arrow_both
+line.style_dotted
+Line style for line.new and line.set_style functions
+TYPE
+string
+SEE ALSO
+line.newline.set_styleline.style_solidline.style_dashedline.style_arrow_leftline.style_arrow_rightline.style_arrow_both
+line.style_solid
+Line style for line.new and line.set_style functions
+TYPE
+string
+SEE ALSO
+line.newline.set_styleline.style_dottedline.style_dashedline.style_arrow_leftline.style_arrow_rightline.style_arrow_both
+location.abovebar
+Location value for plotshape, plotchar functions. Shape is plotted above main series bars.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlocation.belowbarlocation.toplocation.bottomlocation.absolute
+location.absolute
+Location value for plotshape, plotchar functions. Shape is plotted on chart using indicator value as a price coordinate.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlocation.abovebarlocation.belowbarlocation.toplocation.bottom
+location.belowbar
+Location value for plotshape, plotchar functions. Shape is plotted below main series bars.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlocation.abovebarlocation.toplocation.bottomlocation.absolute
+location.bottom
+Location value for plotshape, plotchar functions. Shape is plotted near the bottom chart border.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlocation.abovebarlocation.belowbarlocation.toplocation.absolute
+location.top
+Location value for plotshape, plotchar functions. Shape is plotted near the top chart border.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlocation.abovebarlocation.belowbarlocation.bottomlocation.absolute
+low
+Current low price.
+TYPE
+float
+REMARKS
+Previous values may be accessed with square brackets operator [], e.g. low[1], low[2].
+SEE ALSO
+openhighclosevolumetimehl2hlc3ohlc4
+minute
+Current bar minute in exchange timezone.
+TYPE
+integer
+SEE ALSO
+minutetimeyearmonthweekofyeardayofmonthdayofweekhoursecond
+month
+Current bar month in exchange timezone.
+TYPE
+integer
+SEE ALSO
+monthtimeyearweekofyeardayofmonthdayofweekhourminutesecond
+na
+Double.NaN value (Not a Number).
+TYPE
+na
+EXAMPLE
+bar_index < 10 ? na : close    // CORRECT
+
+close == na ? close[1] : close    // INCORRECT!
+na(close) ? close[1] : close    // CORRECT
+REMARKS
+Use it for return values ONLY. DON'T TRY TO COMPARE WITH IT! If you need to check if some value is NaN, use built-in function na.
+SEE ALSO
+na
+nvi
+Negative Volume Index
+TYPE
+float
+EXAMPLE
+//@version=4
+study('My Script')
+
+plot(nvi, color=color.yellow)
+
+// the same on pine
+f_nvi() =>
+    float nvi = 1.0
+    float prevNvi = (nz(nvi[1], 0.0) == 0.0)  ? 1.0: nvi[1]
+    if nz(close, 0.0) == 0.0 or nz(close[1], 0.0) == 0.0
+        nvi := prevNvi
+    else
+        nvi := (volume < nz(volume[1], 0.0)) ? prevNvi + ((close - close[1]) / close[1]) * prevNvi : prevNvi
+    result = nvi
+
+plot(f_nvi())
+obv
+On Balance Volume
+TYPE
+float
+EXAMPLE
+study('My Script')
+plot(obv, color=color.yellow)
+
+// the same on pine
+f_obv() =>
+    return = cum(sign(change(close)) * volume)
+
+plot(f_obv())
+ohlc4
+Is a shortcut for (open + high + low + close)/4
+TYPE
+float
+SEE ALSO
+openhighlowclosevolumetimehl2hlc3
+open
+Current open price.
+TYPE
+float
+REMARKS
+Previous values may be accessed with square brackets operator [], e.g. open[1], open[2].
+SEE ALSO
+highlowclosevolumetimehl2hlc3ohlc4
+plot.style_area
+Is a named constant for area style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_steplineplot.style_histogramplot.style_areabrplot.style_crossplot.style_columnsplot.style_circles
+plot.style_areabr
+Is a named constant for area style of plot function. Same as area but doesn't fill the breaks (gaps) in data.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_steplineplot.style_histogramplot.style_crossplot.style_areaplot.style_columnsplot.style_circles
+plot.style_circles
+Is a named constant for circles style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_steplineplot.style_histogramplot.style_crossplot.style_areaplot.style_areabrplot.style_columns
+plot.style_columns
+Is a named constant for columns style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_steplineplot.style_histogramplot.style_crossplot.style_areaplot.style_areabrplot.style_circles
+plot.style_cross
+Is a named constant for cross style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_steplineplot.style_histogramplot.style_areaplot.style_areabrplot.style_columnsplot.style_circles
+plot.style_histogram
+Is a named constant for histogram style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_steplineplot.style_crossplot.style_areaplot.style_areabrplot.style_columnsplot.style_circles
+plot.style_line
+Is a named constant for line style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_linebrplot.style_steplineplot.style_histogramplot.style_crossplot.style_areaplot.style_areabrplot.style_columnsplot.style_circles
+plot.style_linebr
+Is a named constant for line style of plot function. Same as line but doesn't fill the breaks (gaps) in data.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_steplineplot.style_histogramplot.style_crossplot.style_areaplot.style_areabrplot.style_columnsplot.style_circles
+plot.style_stepline
+Is a named constant for stepline style of plot function.
+TYPE
+integer
+SEE ALSO
+plot.style_lineplot.style_linebrplot.style_histogramplot.style_crossplot.style_areaplot.style_areabrplot.style_columnsplot.style_circles
+pvi
+Positive Volume Index
+TYPE
+float
+EXAMPLE
+//@version=4
+study('My Script')
+
+plot(pvi, color=color.yellow)
+
+// the same on pine
+f_pvi() =>
+    float pvi = 1.0
+    float prevPvi = (nz(pvi[1], 0.0) == 0.0)  ? 1.0: pvi[1]
+    if nz(close, 0.0) == 0.0 or nz(close[1], 0.0) == 0.0
+        pvi := prevPvi
+    else
+        pvi := (volume > nz(volume[1], 0.0)) ? prevPvi + ((close - close[1]) / close[1]) * prevPvi : prevPvi
+    result = pvi
+
+plot(f_pvi())
+pvt
+Price-Volume Trend
+TYPE
+float
+EXAMPLE
+study('My Script')
+plot(pvt, color=color.yellow)
+
+// the same on pine
+f_pvt() =>
+    return = cum((change(close) / close[1]) * volume)
+
+plot(f_pvt())
+scale.left
+Scale value for study function. Study is added to the left price scale.
+TYPE
+integer
+SEE ALSO
+study
+scale.none
+Scale value for study function. Study is added in 'No Scale' mode. Can be used only with 'overlay=true'.
+TYPE
+integer
+SEE ALSO
+study
+scale.right
+Scale value for study function. Study is added to the right price scale.
+TYPE
+integer
+SEE ALSO
+study
+second
+Current bar second in exchange timezone.
+TYPE
+integer
+SEE ALSO
+secondtimeyearmonthweekofyeardayofmonthdayofweekhourminute
+session.extended
+Constant for extended session type (with extended hours data).
+TYPE
+string
+SEE ALSO
+session.regularsyminfo.session
+session.regular
+Constant for regular session type (no extended hours data).
+TYPE
+string
+SEE ALSO
+session.extendedsyminfo.session
+shape.arrowdown
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.arrowup
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.circle
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.cross
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.diamond
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.flag
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.labeldown
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.labelup
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.square
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.triangledown
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.triangleup
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+shape.xcross
+Shape style for plotshape function.
+TYPE
+string
+SEE ALSO
+plotshape
+size.auto
+Size value for plotshape, plotchar functions. The size of the shape automatically adapts to the size of the bars.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlabel.set_sizesize.tinysize.smallsize.normalsize.largesize.huge
+size.huge
+Size value for plotshape, plotchar functions. The size of the shape constantly huge.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlabel.set_sizesize.autosize.tinysize.smallsize.normalsize.large
+size.large
+Size value for plotshape, plotchar functions. The size of the shape constantly large.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlabel.set_sizesize.autosize.tinysize.smallsize.normalsize.huge
+size.normal
+Size value for plotshape, plotchar functions. The size of the shape constantly normal.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlabel.set_sizesize.autosize.tinysize.smallsize.largesize.huge
+size.small
+Size value for plotshape, plotchar functions. The size of the shape constantly small.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlabel.set_sizesize.autosize.tinysize.normalsize.largesize.huge
+size.tiny
+Size value for plotshape, plotchar functions. The size of the shape constantly tiny.
+TYPE
+string
+SEE ALSO
+plotshapeplotcharlabel.set_sizesize.autosize.smallsize.normalsize.largesize.huge
+strategy.cash
+If the number of contracts/shares/lots/units to buy/sell is not specified for strategy.entry or strategy.order commands (or 'NaN' is specified), then strategy will calculate the quantity to buy/sell at close of current bar using the amount of money specified in the 'default_qty_value'.
+TYPE
+string
+SEE ALSO
+strategy
+strategy.closedtrades
+Number of trades, which were closed for the whole trading interval.
+TYPE
+integer
+SEE ALSO
+strategy.position_sizestrategy.opentradesstrategy.wintradesstrategy.losstradesstrategy.eventrades
+strategy.commission.cash_per_contract
+Commission type for an order. Money displayed in the account currency per contract.
+TYPE
+string
+SEE ALSO
+strategy
+strategy.commission.cash_per_order
+Commission type for an order. Money displayed in the account currency per order.
+TYPE
+string
+SEE ALSO
+strategy
+strategy.commission.percent
+Commission type for an order. A percentage of the cash volume of order.
+TYPE
+string
+SEE ALSO
+strategy
+strategy.direction.all
+It allows strategy to open both long and short positions.
+TYPE
+string
+SEE ALSO
+strategy.risk.allow_entry_in
+strategy.direction.long
+It allows strategy to open only long positions.
+TYPE
+string
+SEE ALSO
+strategy.risk.allow_entry_in
+strategy.direction.short
+It allows strategy to open only short positions.
+TYPE
+string
+SEE ALSO
+strategy.risk.allow_entry_in
+strategy.equity
+Current equity ( strategy.initial_capital + strategy.netprofit + strategy.openprofit ).
+TYPE
+float
+SEE ALSO
+strategy.netprofitstrategy.openprofitstrategy.position_size
+strategy.eventrades
+Number of breakeven trades for the whole trading interval.
+TYPE
+integer
+SEE ALSO
+strategy.position_sizestrategy.opentradesstrategy.closedtradesstrategy.wintradesstrategy.losstrades
+strategy.fixed
+If the number of contracts/shares/lots/units to buy/sell is not specified for strategy.entry or strategy.order commands (or 'NaN' is specified), then the 'default_qty_value' is used to define the quantity.
+TYPE
+string
+SEE ALSO
+strategy
+strategy.grossloss
+Total currency value of all completed losing trades.
+TYPE
+float
+SEE ALSO
+strategy.netprofitstrategy.grossprofit
+strategy.grossprofit
+Total currency value of all completed winning trades.
+TYPE
+float
+SEE ALSO
+strategy.netprofitstrategy.grossloss
+strategy.initial_capital
+The amount of initial capital set in the strategy properties.
+TYPE
+float
+SEE ALSO
+strategy
+strategy.long
+Long position entry.
+TYPE
+bool
+SEE ALSO
+strategy.entrystrategy.exitstrategy.order
+strategy.losstrades
+Number of unprofitable trades for the whole trading interval.
+TYPE
+integer
+SEE ALSO
+strategy.position_sizestrategy.opentradesstrategy.closedtradesstrategy.wintradesstrategy.eventrades
+strategy.max_contracts_held_all
+Maximum number of contracts/shares/lots/units in one trade for the whole trading interval.
+TYPE
+float
+SEE ALSO
+strategy.position_sizestrategy.max_contracts_held_longstrategy.max_contracts_held_short
+strategy.max_contracts_held_long
+Maximum number of contracts/shares/lots/units in one long trade for the whole trading interval.
+TYPE
+float
+SEE ALSO
+strategy.position_sizestrategy.max_contracts_held_allstrategy.max_contracts_held_short
+strategy.max_contracts_held_short
+Maximum number of contracts/shares/lots/units in one short trade for the whole trading interval.
+TYPE
+float
+SEE ALSO
+strategy.position_sizestrategy.max_contracts_held_allstrategy.max_contracts_held_long
+strategy.max_drawdown
+Maximum equity drawdown value for the whole trading interval.
+TYPE
+float
+SEE ALSO
+strategy.netprofitstrategy.equity
+strategy.netprofit
+Total currency value of all completed trades.
+TYPE
+float
+SEE ALSO
+strategy.openprofitstrategy.position_sizestrategy.grossprofitstrategy.grossloss
+strategy.oca.cancel
+OCA type value for strategy's functions. The parameter determines that an order should belong to an OCO group, where as soon as an order is filled, all other orders of the same group are cancelled. Note: if more than 1 guaranteed-to-be-executed orders of the same OCA group are placed at once, all those orders are filled.
+TYPE
+string
+SEE ALSO
+strategy.entrystrategy.exitstrategy.order
+strategy.oca.none
+OCA type value for strategy's functions. The parameter determines that an order should not belong to any particular OCO group.
+TYPE
+string
+SEE ALSO
+strategy.entrystrategy.exitstrategy.order
+strategy.oca.reduce
+OCA type value for strategy's functions. The parameter determines that an order should belong to an OCO group, where if X number of contracts of an order is filled, number of contracts for each other order of the same OCO group is decreased by X. Note: if more than 1 guaranteed-to-be-executed orders of the same OCA group are placed at once, all those orders are filled.
+TYPE
+string
+SEE ALSO
+strategy.entrystrategy.exitstrategy.order
+strategy.openprofit
+Current unrealized profit or loss for the open position.
+TYPE
+float
+SEE ALSO
+strategy.netprofitstrategy.position_size
+strategy.opentrades
+Number of market position entries, which were not closed and remain opened. If there is no open market position, 0 is returned.
+TYPE
+integer
+SEE ALSO
+strategy.position_size
+strategy.percent_of_equity
+If the number of contracts/shares/lots/units to buy/sell is not specified for strategy.entry or strategy.order commands (or 'NaN' is specified), then strategy will calculate the quantity to buy/sell at close of current bar using the amount of money specified by the 'default_qty_value' in % from current strategy.equity (in the range from 0 to 100).
+TYPE
+string
+SEE ALSO
+strategy
+strategy.position_avg_price
+Average entry price of current market position. If the market position is flat, 'NaN' is returned.
+TYPE
+float
+SEE ALSO
+strategy.position_size
+strategy.position_entry_name
+Name of the order that initially opened current market position.
+TYPE
+string
+SEE ALSO
+strategy.position_size
+strategy.position_size
+Direction and size of the current market position. If the value is > 0, the market position is long. If the value is < 0, the market position is short. The absolute value is the number of contracts/shares/lots/units in trade (position size).
+TYPE
+float
+SEE ALSO
+strategy.position_avg_price
+strategy.short
+Short position entry.
+TYPE
+bool
+SEE ALSO
+strategy.entrystrategy.exitstrategy.order
+strategy.wintrades
+Number of profitable trades for the whole trading interval.
+TYPE
+integer
+SEE ALSO
+strategy.position_sizestrategy.opentradesstrategy.closedtradesstrategy.losstradesstrategy.eventrades
+syminfo.currency
+Currency for the current symbol. Returns currency code: "USD", "EUR", etc.
+TYPE
+string
+SEE ALSO
+syminfo.tickercurrency.USDcurrency.EUR
+syminfo.description
+Description for the current symbol.
+TYPE
+string
+SEE ALSO
+syminfo.tickersyminfo.prefix
+syminfo.mintick
+Min tick value for the current symbol.
+TYPE
+float
+SEE ALSO
+syminfo.pointvalue
+syminfo.pointvalue
+Point value for the current symbol.
+TYPE
+float
+SEE ALSO
+syminfo.mintick
+syminfo.prefix
+Prefix of current symbol name (i.e. for 'CME_EOD:TICKER' prefix is 'CME_EOD').
+TYPE
+string
+EXAMPLE
+If current chart symbol is 'BATS:MSFT' then syminfo.prefix is 'BATS'.
+SEE ALSO
+syminfo.tickersyminfo.tickerid
+syminfo.root
+Root for derivatives like futures contract. For other symbols returns the same value as syminfo.ticker.
+TYPE
+string
+EXAMPLE
+For example if current chart ticker is 'CLM2014', would return 'CL'.
+SEE ALSO
+syminfo.tickersyminfo.tickerid
+syminfo.session
+Session type of the chart main series. Possible values are session.regular, session.extended.
+TYPE
+string
+SEE ALSO
+session.regularsession.extended
+syminfo.ticker
+Symbol name without exchange prefix, e.g. 'MSFT'
+TYPE
+string
+SEE ALSO
+syminfo.tickeridtimeframe.periodtimeframe.multipliersyminfo.root
+syminfo.tickerid
+Symbol name with exchange prefix, e.g. 'BATS:MSFT', 'NASDAQ:MSFT'
+TYPE
+string
+SEE ALSO
+tickeridsyminfo.tickertimeframe.periodtimeframe.multipliersyminfo.root
+syminfo.timezone
+Timezone of the exchange of the chart main series. Possible values see in timestamp.
+TYPE
+string
+SEE ALSO
+timestamp
+syminfo.type
+Type of the current symbol. Possible values are stock, futures, index, forex, crypto, fund.
+TYPE
+string
+SEE ALSO
+syminfo.ticker
+text.align_center
+Label text alignment for label.new and label.set_textalign functions.
+TYPE
+string
+SEE ALSO
+label.newlabel.set_styletext.align_lefttext.align_right
+text.align_left
+Label text alignment for label.new and label.set_textalign functions.
+TYPE
+string
+SEE ALSO
+label.newlabel.set_styletext.align_centertext.align_right
+text.align_right
+Label text alignment for label.new and label.set_textalign functions.
+TYPE
+string
+SEE ALSO
+label.newlabel.set_styletext.align_centertext.align_left
+time
+Current bar time in UNIX format. It is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+TYPE
+integer
+SEE ALSO
+timetime_closetimenowyearmonthweekofyeardayofmonthdayofweekhourminutesecond
+time_close
+Current bar close time in UNIX format. It is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970. On price-based charts this variable value is na.
+TYPE
+integer
+SEE ALSO
+timetimenowyearmonthweekofyeardayofmonthdayofweekhourminutesecond
+timeframe.isdaily
+Returns true if current resolution is a daily resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isdwmtimeframe.isintradaytimeframe.isminutestimeframe.issecondstimeframe.isweeklytimeframe.ismonthly
+timeframe.isdwm
+Returns true if current resolution is a daily or weekly or monthly resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isintradaytimeframe.isminutestimeframe.issecondstimeframe.isdailytimeframe.isweeklytimeframe.ismonthly
+timeframe.isintraday
+Returns true if current resolution is an intraday (minutes or seconds) resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isminutestimeframe.issecondstimeframe.isdwmtimeframe.isdailytimeframe.isweeklytimeframe.ismonthly
+timeframe.isminutes
+Returns true if current resolution is a minutes resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isdwmtimeframe.isintradaytimeframe.issecondstimeframe.isdailytimeframe.isweeklytimeframe.ismonthly
+timeframe.ismonthly
+Returns true if current resolution is a monthly resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isdwmtimeframe.isintradaytimeframe.isminutestimeframe.issecondstimeframe.isdailytimeframe.isweekly
+timeframe.isseconds
+Returns true if current resolution is a seconds resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isdwmtimeframe.isintradaytimeframe.isminutestimeframe.isdailytimeframe.isweeklytimeframe.ismonthly
+timeframe.isweekly
+Returns true if current resolution is a weekly resolution, false otherwise.
+TYPE
+bool
+SEE ALSO
+timeframe.isdwmtimeframe.isintradaytimeframe.isminutestimeframe.issecondstimeframe.isdailytimeframe.ismonthly
+timeframe.multiplier
+Multiplier of resolution, e.g. '60' - 60, 'D' - 1, '5D' - 5, '12M' - 12
+TYPE
+integer
+SEE ALSO
+syminfo.tickersyminfo.tickeridtimeframe.period
+timeframe.period
+Resolution, e.g. '60' - 60 minutes, 'D' - daily, 'W' - weekly, 'M' - monthly, '5D' - 5 days, '12M' - one year, '3M' - one quarter
+TYPE
+string
+SEE ALSO
+syminfo.tickersyminfo.tickeridtimeframe.multiplier
+timenow
+Current time in UNIX format. It is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+TYPE
+integer
+SEE ALSO
+timestamptimetime_closeyearmonthweekofyeardayofmonthdayofweekhourminutesecond
+tr
+True range. Same as tr(false). It is max(high - low, abs(high - close[1]), abs(low - close[1]))
+TYPE
+float
+SEE ALSO
+tratr
+volume
+Current bar volume.
+TYPE
+float
+REMARKS
+Previous values may be accessed with square brackets operator [], e.g. volume[1], volume[2].
+SEE ALSO
+openhighlowclosetimehl2hlc3ohlc4
+vwap
+Volume-weighted average price. It uses hlc3 as a source series.
+TYPE
+float
+SEE ALSO
+vwap
+wad
+Williams Accumulation/Distribution
+TYPE
+float
+EXAMPLE
+study('My Script')
+plot(wad, color=color.yellow)
+
+// the same on pine
+f_wad() =>
+    trueHigh = max(high, close[1])
+    trueLow = min(low, close[1])
+    mom = change(close)
+    gain = (mom > 0) ? close - trueLow : (mom < 0) ? close - trueHigh : 0
+    return = cum(gain)
+
+plot(f_wad())
+weekofyear
+Week number of current bar time in exchange timezone.
+TYPE
+integer
+SEE ALSO
+weekofyeartimeyearmonthdayofmonthdayofweekhourminutesecond
+wvad
+Williams Variable Accumulation/Distribution
+TYPE
+float
+EXAMPLE
+study('My Script')
+plot(wvad, color=color.yellow)
+
+// the same on pine
+f_wvad() =>
+    return = (close - open) / (high - low) * volume
+
+plot(f_wvad())
+xloc.bar_index
+A named constant that specifies the algorithm of interpretation of x-value in functions line.new and label.new. If xloc = xloc.bar_index, value of x is a bar index
+TYPE
+string
+SEE ALSO
+line.newlabel.newline.set_xloclabel.set_xlocxloc.bar_time
+xloc.bar_time
+A named constant that specifies the algorithm of interpretation of x-value in functions line.new and label.new. If xloc = xloc.bar_time, value of x is a bar UNIX time
+TYPE
+string
+SEE ALSO
+line.newlabel.newline.set_xloclabel.set_xlocxloc.bar_index
+year
+Current bar year in exchange timezone.
+TYPE
+integer
+SEE ALSO
+yeartimemonthweekofyeardayofmonthdayofweekhourminutesecond
+yloc.abovebar
+A named constant that specifies the algorithm of interpretation of y-value in function label.new
+TYPE
+string
+SEE ALSO
+label.newlabel.set_ylocyloc.priceyloc.belowbar
+yloc.belowbar
+A named constant that specifies the algorithm of interpretation of y-value in function label.new
+TYPE
+string
+SEE ALSO
+label.newlabel.set_ylocyloc.priceyloc.abovebar
+yloc.price
+A named constant that specifies the algorithm of interpretation of y-value in function label.new
+TYPE
+string
+SEE ALSO
+label.newlabel.set_ylocyloc.abovebaryloc.belowbar
+Built-In Functions
+abs
+Absolute value of x is x if x >= 0, or -x otherwise.
+abs(x) → integer
+abs(x) → input integer
+abs(x) → const integer
+abs(x) → float
+abs(x) → input float
+abs(x) → const float
+abs(x) → series[float]
+RETURNS
+The absolute value of x
+acos
+The acos function returns the arccosine (in radians) of number such that cos(acos(y)) = y for y in range [-1, 1].
+acos(x) → float
+acos(x) → input float
+acos(x) → const float
+acos(x) → series[float]
+RETURNS
+The arc cosine of a value; the returned angle is in the range [0, Pi], or na if y is outside of range [-1, 1].
+alertcondition
+Creates alert condition, that is available in Create Alert dialog. Please note, that alertcondition does NOT create an alert, it just gives you more options in Create Alert dialog. Also, alertcondition effect is invisible on chart.
+alertcondition(condition, title, message) → void
+EXAMPLE
+alertcondition(close >= open, title='Alert on Green Bar', message='Green Bar!')
+ARGUMENTS
+condition (series) Series of boolean values that is used for alert. True values mean alert fire, false - no alert. Required argument.
+title (const string) Title of the alert condition. Optional argument.
+message (const string) Message to display when alert fires. Optional argument.
+REMARKS
+Please note that in Pine v4 an alertcondition call generates an additional plot. All such calls are taken into account when we calculate the number of the output series per script.
+alma
+Arnaud Legoux Moving Average. It uses Gaussian distribution as weights for moving average.
+alma(series, length, offset, sigma) → series[float]
+EXAMPLE
+plot(alma(close, 9, 0.85, 6))
+
+// same on pine, but much less efficient
+pine_alma(series, windowsize, offset, sigma) =>
+    m = floor(offset * (windowsize - 1))
+    s = windowsize / sigma
+    norm = 0.0
+    sum = 0.0
+    for i = 0 to windowsize - 1
+        weight = exp(-1 * pow(i - m, 2) / (2 * pow(s, 2)))
+        norm := norm + weight
+        sum := sum + series[windowsize - i - 1] * weight
+    sum / norm
+plot(pine_alma(close, 9, 0.85, 6))
+RETURNS
+Arnaud Legoux Moving Average.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+offset (float) Controls tradeoff between smoothness (closer to 1) and responsiveness (closer to 0).
+sigma (float) Changes the smoothness of ALMA. The larger sigma the smoother ALMA.
+SEE ALSO
+smaemarmawmavwmaswma
+asin
+The asin function returns the arcsine (in radians) of number such that sin(asin(y)) = y for y in range [-1, 1].
+asin(x) → float
+asin(x) → input float
+asin(x) → const float
+asin(x) → series[float]
+RETURNS
+The arcsine of a value; the returned angle is in the range [-Pi/2, Pi/2], or na if y is outside of range [-1, 1].
+atan
+The atan function returns the arctangent (in radians) of number such that tan(atan(y)) = y for any y.
+atan(x) → float
+atan(x) → input float
+atan(x) → const float
+atan(x) → series[float]
+RETURNS
+The arc tangent of a value; the returned angle is in the range [-Pi/2, Pi/2].
+atr
+Function atr (average true range) returns the RMA of true range. True range is max(high - low, abs(high - close[1]), abs(low - close[1]))
+atr(length) → series[float]
+RETURNS
+Average true range.
+ARGUMENTS
+length (integer) Length (number of bars back).
+SEE ALSO
+trrma
+avg
+Calculates average of all given series (elementwise).
+avg(x1, x2, ..., x10) -> series[float]
+RETURNS
+Average.
+SEE ALSO
+sumcumsma
+barcolor
+Set color of bars.
+barcolor(color, offset, editable, show_last, title) → void
+EXAMPLE
+barcolor(close < open ? color.black : color.white)
+ARGUMENTS
+color (color) Color of bars. You can use constants like 'red' or '#ff001a' as well as complex expressions like 'close >= open ? color.green : color.red'. Required argument.
+offset (integer) Shifts the color series to the left or to the right on the given number of bars. Default is 0.
+editable (const bool) If true then barcolor style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of bars (from the last bar back to the past) to fill on chart.
+title (const string) Title of the barcolor. Optional argument.
+SEE ALSO
+bgcolorplotfill
+barssince
+The barssince function counts a number of bars since condition was true.
+barssince(condition) → series[integer]
+EXAMPLE
+// get number of bars since last color.green bar
+barssince(close >= open)
+RETURNS
+Number of bars since condition was true.
+SEE ALSO
+lowestbarshighestbars
+bb
+Bollinger Bands. A Bollinger Band is a technical analysis tool defined by a set of lines plotted two standard deviations (positively and negatively) away from a simple moving average (SMA) of the security's price, but can be adjusted to user preferences.
+bb(series, length, mult) → [series[float], series[float], series[float]]
+EXAMPLE
+//@version=4
+study('My Script')
+
+[middle, upper, lower] = bb(close, 5, 4)
+plot(middle, color=color.yellow)
+plot(upper, color=color.yellow)
+plot(lower, color=color.yellow)
+
+// the same on pine
+f_bb(src, length, mult) =>
+    float basis = sma(src, length)
+    float dev = mult * stdev(src, length)
+    [basis, basis + dev, basis - dev]
+
+[pineMiddle, pineUpper, pineLower] = f_bb(close, 5, 4)
+
+plot(pineMiddle)
+plot(pineUpper)
+plot(pineLower)
+RETURNS
+Bollinger Bands.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+mult (float) Standard deviation factor
+SEE ALSO
+smastdevkc
+bbw
+Bollinger Bands Width. The Bollinger Band Width is the difference between the upper and the lower Bollinger Bands divided by the middle band.
+bbw(series, length, mult) → series[float]
+EXAMPLE
+//@version=4
+study('My Script')
+
+plot(bbw(close, 5, 4), color=color.yellow)
+
+// the same on pine
+f_bbw(src, length, mult) =>
+    float basis = sma(src, length)
+    float dev = mult * stdev(src, length)
+    ((basis + dev) - (basis - dev)) / basis
+
+plot(f_bbw(close, 5, 4))
+RETURNS
+Bollinger Bands Width.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+mult (float) Standard deviation factor
+SEE ALSO
+bbsmastdev
+bgcolor
+Fill background of bars with specified color.
+bgcolor(color, transp, offset, editable, show_last, title) → void
+EXAMPLE
+bgcolor(close < open ? color.red : color.green, transp=70)
+ARGUMENTS
+color (color) Color of the filled background. You can use constants like 'red' or '#ff001a' as well as complex expressions like 'close >= open ? color.green : color.red'. Required argument.
+transp (input integer) Transparency of the filled background. Possible values are from 0 (not transparent) to 100 (invisible). Optional argument.
+offset (integer) Shifts the color series to the left or to the right on the given number of bars. Default is 0.
+editable (const bool) If true then bgcolor style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of bars (from the last bar back to the past) to fill on chart.
+title (const string) Title of the bgcolor. Optional argument.
+SEE ALSO
+barcolorplotfill
+bool
+Casts na to bool
+bool(x) → const bool
+bool(x) → input bool
+bool(x) → bool
+bool(x) → series[bool]
+RETURNS
+The value of the argument after casting to bool.
+SEE ALSO
+floatintcolorstringlinelabel
+cci
+The CCI (commodity channel index) is calculated as the difference between the typical price of a commodity and its simple moving average, divided by the mean absolute deviation of the typical price. The index is scaled by an inverse factor of 0.015 to provide more readable numbers
+cci(source, length) → series[float]
+RETURNS
+Commodity channel index of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+ceil
+The ceil function returns the smallest (closest to negative infinity) integer that is greater than or equal to the argument.
+ceil(x) → integer
+ceil(x) → input integer
+ceil(x) → const integer
+ceil(x) → series[integer]
+RETURNS
+The smallest integer greater than or equal to the given number.
+SEE ALSO
+floorround
+change
+Difference between current value and previous, x - x[y].
+change(source, length) → series[float]
+change(source) → series[float]
+RETURNS
+Differences series.
+ARGUMENTS
+source (series)
+length (integer) Offset from the current bar to the previous bar. Optional, if not given, length = 1 is used.
+SEE ALSO
+momcross
+cmo
+Chande Momentum Oscillator. Calculates the difference between the sum of recent gains and the sum of recent losses and then divides the result by the sum of all price movement over the same period.
+cmo(series, length) → series[float]
+EXAMPLE
+study('My Script')
+plot(cmo(close, 5), color=color.yellow)
+
+// the same on pine
+f_cmo(src, length) =>
+    float mom = change(src)
+    float sm1 = sum((mom >= 0) ? mom : 0.0, length)
+    float sm2 = sum((mom >= 0) ? 0.0 : -mom, length)
+    return = 100 * (sm1 - sm2) / (sm1 + sm2)
+
+plot(f_cmo(close, 5))
+RETURNS
+Chande Momentum Oscillator.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+rsistochsum
+cog
+The cog (center of gravity) is an indicator based on statistics and the Fibonacci golden ratio.
+cog(source, length) → series[float]
+RETURNS
+Center of Gravity.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+stoch
+color
+Casts na to color
+color(x) → const color
+color(x) → input color
+color(x) → color
+color(x) → series[color]
+RETURNS
+The value of the argument after casting to color.
+SEE ALSO
+floatintboolstringlinelabel
+color.new
+Function color applies the specified transparency to the given color.
+color.new(color, transp) → const color
+EXAMPLE
+color.new(color.red, 50)
+RETURNS
+Color with specified transparency.
+ARGUMENTS
+color (color)
+transp (integer) Possible values are from 0 (not transparent) to 100 (invisible).
+REMARKS
+Color with transparency overrides "transp" argument of plot function.
+correlation
+Correlation coefficient. Describes the degree to which two series tend to deviate from their sma values.
+correlation(source_a, source_b, length) → series[float]
+RETURNS
+Correlation coefficient.
+ARGUMENTS
+source_a (series) Source series.
+source_b (series) Target series.
+length (integer) Length (number of bars back).
+SEE ALSO
+security
+cos
+The cos function returns the trigonometric cosine of an angle.
+cos(x) → float
+cos(x) → input float
+cos(x) → const float
+cos(x) → series[float]
+RETURNS
+The trigonometric cosine of an angle.
+ARGUMENTS
+x Angle, in radians.
+cross
+cross(x, y) → series[bool]
+RETURNS
+1 if two series has crossed each other, otherwise 0.
+ARGUMENTS
+x (series)
+y (series)
+SEE ALSO
+change
+crossover
+The `x`-series is defined as having crossed over `y`-series if the value of `x` is greater than the value of `y` and the value of `x` was less than the value of `y` on the bar immediately preceding the current bar.
+crossover(x, y) → series[bool]
+RETURNS
+true if `x` crossed over `y` otherwise false
+ARGUMENTS
+x (float) Data series `x`.
+y (float) Data series `y`.
+crossunder
+The `x`-series is defined as having crossed under `y`-series if the value of `x` is less than the value of `y` and the value of `x` was greater than the value of `y` on the bar immediately preceding the current bar.
+crossunder(x, y) → series[bool]
+RETURNS
+true if `x` crossed under `y` otherwise false
+ARGUMENTS
+x (float) Data series `x`.
+y (float) Data series `y`.
+cum
+Cumulative (total) sum of x. In other words it's a sum of all elements of x.
+cum(x) → series[float]
+RETURNS
+Total sum series.
+ARGUMENTS
+x (series)
+SEE ALSO
+sum
+dayofmonth
+dayofmonth(time) → series[integer]
+RETURNS
+Day of month (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+dayofmonthtimeyearmonthdayofweekhourminutesecond
+dayofweek
+dayofweek(time) → series[integer]
+RETURNS
+Day of week (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+dayofweektimeyearmonthdayofmonthhourminutesecond
+dev
+Measure of difference between the series and it's sma
+dev(source, length) → series[float]
+RETURNS
+Deviation of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+variancestdev
+dmi
+The dmi function returns the directional movement index.
+dmi(diLength, adxSmoothing) → [series[float], series[float], series[float]]
+EXAMPLE
+study(title="Directional Movement Index", shorttitle="DMI", format=format.price, precision=4)
+len = input(17, minval=1, title="DI Length")
+lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
+[diplus, diminus, adx] = dmi(len, lensig)
+plot(adx, color=color.red, title="ADX")
+plot(diplus, color=color.blue, title="+DI")
+plot(diminus, color=color.orange, title="-DI")
+RETURNS
+Tuple of three DMI series: Positive Directional Movement (+DI), Negative Directional Movement (-DI) and Average Directional Movement Index (ADX).
+ARGUMENTS
+diLength (integer) DI Period.
+adxSmoothing (integer) ADX Smoothing Period.
+SEE ALSO
+rsitsimfi
+ema
+The sma function returns the exponentially weighted moving average. In ema weighting factors decrease exponentially. It calculates by sing a formula: EMA = alpha * x + (1 - alpha) * EMA[1], where alpha = 2 / (y + 1)
+ema(source, length) → series[float]
+EXAMPLE
+plot(ema(close, 15))
+
+// same on pine, but much less efficient
+pine_ema(x, y) =>
+    alpha = 2 / (y + 1)
+    sum = 0.0
+    sum := alpha * x + (1 - alpha) * nz(sum[1])
+plot(pine_ema(close, 15))
+RETURNS
+Exponential moving average of x with alpha = 2 / (y + 1)
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+smarmawmavwmaswmaalma
+exp
+The exp function of x is e^x, where x is the argument and e is Euler's number.
+exp(x) → float
+exp(x) → input float
+exp(x) → const float
+exp(x) → series[float]
+RETURNS
+A number representing e^x.
+SEE ALSO
+pow
+falling
+Test if the x series is now falling for y bars long.
+falling(source, length) → series[bool]
+RETURNS
+true if current x is less than any previous x for y bars back, false otherwise.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+rising
+fill
+Fills background between two plots or hlines with a given color.
+fill(hline1, hline2, color, transp, title, editable) → void
+fill(plot1, plot2, color, transp, title, editable, show_last) → void
+EXAMPLE
+h1 = hline(20)
+h2 = hline(10)
+fill(h1, h2)
+
+p1 = plot(open)
+p2 = plot(close)
+fill(p1, p2, color=color.green)
+ARGUMENTS
+hline1 (hline) The first hline object. Required argument.
+hline2 (hline) The second hline object. Required argument.
+plot1 (plot) The first plot object. Required argument.
+plot2 (plot) The second plot object. Required argument.
+color (color) Color of the plot. You can use constants like 'color=color.red' or 'color=#ff001a' as well as complex expressions like 'color = close >= open ? color.green : color.red'. Optional argument.
+transp (input integer) Transparency of the filled background. Possible values are from 0 (not transparent) to 100 (invisible). Optional argument.
+title (const string) Title of the created fill object. Optional argument.
+editable (const bool) If true then fill style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of bars (from the last bar back to the past) to fill on chart.
+SEE ALSO
+plotbarcolorbgcolorhline
+financial
+Requests financial series for symbol.
+financial(symbol, financial_id, period, gaps) → series[float]
+EXAMPLE
+f = financial("NASDAQ:MSFT", "ACCOUNTS_PAYABLE", "FY")
+plot(f)
+RETURNS
+Requested series.
+ARGUMENTS
+symbol (string) Symbol. Note that the symbol should be passed with a prefix. For example: "NASDAQ:AAPL" instead of "AAPL".
+financial_id (string) Financial identifier. You can find the list of available ids via our Help Center.
+period (string) Reporting period. Possible values are "TTM", "FY", "FQ".
+gaps (const bool) Merge strategy for the requested data (requested data automatically merges with the main series: OHLC data). Possible values include: barmerge.gaps_on, barmerge.gaps_off. barmerge.gaps_on - requested data is merged with possible gaps (na values). barmerge.gaps_off - requested data is merged continuously without gaps, all the gaps are filled with the previous, nearest existing values. Default value is barmerge.gaps_off
+SEE ALSO
+securitysyminfo.tickerid
+fixnan
+For a given series replaces NaN values with previous nearest non-NaN value.
+fixnan(x) → series[float]
+fixnan(x) → series[integer]
+fixnan(x) → series[bool]
+fixnan(x) → series[color]
+RETURNS
+Series without na gaps.
+ARGUMENTS
+x (series)
+SEE ALSO
+nananz
+float
+Casts na to float
+float(x) → const float
+float(x) → input float
+float(x) → float
+float(x) → series[float]
+RETURNS
+The value of the argument after casting to float.
+SEE ALSO
+intboolcolorstringlinelabel
+floor
+floor(x) → integer
+floor(x) → input integer
+floor(x) → const integer
+floor(x) → series[integer]
+RETURNS
+The largest integer less than or equal to the given number.
+SEE ALSO
+ceilround
+heikinashi
+Creates a ticker identifier for requesting Heikin Ashi bar values.
+heikinashi(symbol) → string
+EXAMPLE
+heikinashi_close = security(heikinashi(syminfo.tickerid), timeframe.period, close)
+
+heikinashi_aapl_60_close = security(heikinashi("AAPL"), "60", close)
+RETURNS
+String value of ticker id, that can be supplied to security function.
+ARGUMENTS
+symbol (string) Symbol ticker identifier.
+SEE ALSO
+syminfo.tickeridsyminfo.tickersecurityrenkolinebreakkagipointfigure
+highest
+Highest value for a given number of bars back.
+highest(source, length) → series[float]
+highest(length) → series[float]
+RETURNS
+Highest value.
+ARGUMENTS
+source (series, integer)
+length (integer)
+REMARKS
+Two args version: x is a series and y is a length.
+One arg version: x is a length. Algorithm uses high as a source series.
+SEE ALSO
+lowestlowestbarshighestbarsvaluewhen
+highestbars
+Highest value offset for a given number of bars back.
+highestbars(source, length) → series[integer]
+highestbars(length) → series[integer]
+RETURNS
+Offset to the highest bar.
+ARGUMENTS
+source (series, integer)
+length (integer)
+REMARKS
+Two args version: x is a series and y is a length.
+One arg version: x is a length. Algorithm uses high as a source series.
+SEE ALSO
+lowesthighestlowestbarsbarssince
+hline
+Renders a horizontal line at a given fixed price level.
+hline(price, title, color, linestyle, linewidth, editable) → hline
+EXAMPLE
+hline(3.14, title='Pi', color=color.blue, linestyle=hline.style_dotted, linewidth=2)
+
+// You may fill the background between any two hlines with a fill() function:
+h1 = hline(20)
+h2 = hline(10)
+fill(h1, h2)
+RETURNS
+An hline object, that can be used in fill
+ARGUMENTS
+price (input float) Price value at which the object will be rendered. Required argument.
+title (const string) Title of the object.
+color (input color) Color of the rendered line. Must be a constant value (not an expression). Optional argument.
+linestyle (input integer) Style of the rendered line. Possible values are: hline.style_solid, hline.style_dotted, hline.style_dashed. Optional argument.
+linewidth (input integer) Width of the rendered line, use values from 1 to 4. Default value is 1.
+editable (const bool) If true then hline style will be editable in Format dialog. Default is true.
+SEE ALSO
+fill
+hma
+The hma function returns the Hull Moving Average.
+hma(source, length) → series[float]
+EXAMPLE
+study("Hull Moving Average")
+src = input(defval=close, type=input.source, title="Source")
+length = input(defval=9, type=input.integer, title="Length")
+hmaBuildIn = hma(src, length)
+plot(hmaBuildIn, title="Hull MA", color=#674EA7)
+RETURNS
+Hull moving average of 'source' for 'length' bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars.
+SEE ALSO
+emarmawmavwmasma
+hour
+hour(time) → series[integer]
+RETURNS
+Hour (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+hourtimeyearmonthdayofmonthdayofweekminutesecond
+iff
+If ... then ... else ...
+iff(condition, then, _else) → bool
+iff(condition, then, _else) → integer
+iff(condition, then, _else) → float
+iff(condition, then, _else) → color
+iff(condition, then, _else) → series[float]
+iff(condition, then, _else) → series[integer]
+iff(condition, then, _else) → series[color]
+iff(condition, then, _else) → string
+iff(condition, then, _else) → input bool
+iff(condition, then, _else) → input integer
+iff(condition, then, _else) → input float
+iff(condition, then, _else) → input string
+iff(condition, then, _else) → input color
+iff(condition, then, _else) → const bool
+iff(condition, then, _else) → const integer
+iff(condition, then, _else) → const float
+iff(condition, then, _else) → const string
+iff(condition, then, _else) → const color
+iff(condition, then, _else) → series[bool]
+iff(condition, then, _else) → series[string]
+iff(condition, then, _else) → series[line]
+iff(condition, then, _else) → series[label]
+EXAMPLE
+// Draw circles at the bars where open crosses close
+s1 = iff(cross(open, close), avg(open,close), na)
+plot(s1, style=plot.style_circles, linewidth=4, color=color.green)
+RETURNS
+y or z series.
+ARGUMENTS
+condition (series) Series with condition values. Zero value (0 and also NaN, +Infinity, -Infinity) is considered to be false, any other value is true.
+then (series) Series with values to return if condition is true.
+_else (series) Series with values to return if condition is false. Use na for `_else` argument if you do not need 'else' branch.
+REMARKS
+iff does exactly the same thing as ternary conditional operator ?: but in a functional style. Also iff is slightly less efficient than operator ?:
+SEE ALSO
+?:na
+input
+Adds an input to your script indicator. User can see and edit inputs on the Format Object dialog of the script study. Script inputs look and behave exactly the same as inputs of built-in Technical Analysis indicators.
+input(defval, title, type, confirm) → input bool
+input(defval, title, type, minval, maxval, confirm, step, options) → input integer
+input(defval, title, type, minval, maxval, confirm, step, options) → input float
+input(defval, title, type, confirm, options) → input string
+input(defval, title, type) → series[float]
+EXAMPLE
+b = input(title="On/Off", type=input.bool, defval=true)
+plot(b ? open : na)
+
+i = input(title="Offset", type=input.integer, defval=7, minval=-10, maxval=10)
+plot(offset(close, i))
+
+f = input(title="Angle", type=input.float, defval=-0.5, minval=-3.14, maxval=3.14, step=0.02)
+plot(sin(f) > 0 ? close : open)
+
+sym = input(title="Symbol", type=input.symbol, defval="DELL")
+res = input(title="Resolution", type=input.resolution, defval="60")
+plot(close, color=color.red)
+plot(security(sym, res, close), color=color.green)
+
+s = input(title="Session", defval="24x7", options=["24x7", "0900-1300", "1300-1700", "1700-2100"])
+plot(time(timeframe.period, s))
+
+src = input(title="Source", type=input.source, defval=close)
+plot(src)
+RETURNS
+Value of input variable.
+ARGUMENTS
+defval (Depends on 'type' argument) Default value of the input variable. Note, that input value that will be ACTUALLY USED by the script is set by user on the Format Object dialog.
+title (const string) Title of the input
+type (const string) Input type. Possible values are input.bool, input.integer, input.float, input.string, input.symbol, input.resolution, input.session, input.source.
+minval (const integer, float) Minimal possible value of the input variable. This argument is used only when input type is input.integer or input.float.
+maxval (const integer, float) Maximum possible value of the input variable. This argument is used only when input type is input.integer or input.float.
+confirm (const bool) If true, then user will be asked to confirm input value before indicator is added to chart. Default value is false. This argument not used when input type is input.source.
+step (const integer, float) Step value to use for incrementing/decrementing input from format dialog. Default value is 1. This argument is used only for input types input.integer and input.float.
+options (List of constants: [<type>...]) A list of options to choose from. This argument is used only for input types input.integer, input.float and input.string.
+REMARKS
+Result of input function always should be assigned to a variable, see examples below.
+int
+Casts na or truncates float value to int
+int(x) → integer
+int(x) → input integer
+int(x) → const integer
+int(x) → series[integer]
+RETURNS
+The value of the argument after casting to int.
+SEE ALSO
+floatboolcolorstringlinelabel
+kagi
+Creates a ticker identifier for requesting Kagi values.
+kagi(symbol, reversal) → string
+EXAMPLE
+kagi_tickerid = kagi(syminfo.tickerid, 3)
+kagi_close = security(kagi_tickerid, timeframe.period, close)
+plot(kagi_close)
+RETURNS
+String value of ticker id, that can be supplied to security function.
+ARGUMENTS
+symbol (string) Symbol ticker identifier.
+reversal (float) Reversal amount (absolute price value).
+SEE ALSO
+syminfo.tickeridsyminfo.tickersecurityheikinashirenkolinebreakpointfigure
+kc
+Keltner Channels. Keltner channel is a technical analysis indicator showing a central moving average line plus channel lines at a distance above and below.
+kc(series, length, mult) → [series[float], series[float], series[float]]
+kc(series, length, mult, useTrueRange) → [series[float], series[float], series[float]]
+EXAMPLE
+//@version=4
+study('My Script')
+
+[middle, upper, lower] = kc(close, 5, 4)
+plot(middle, color=color.yellow)
+plot(upper, color=color.yellow)
+plot(lower, color=color.yellow)
+
+
+// the same on pine
+f_kc(src, length, mult, useTrueRange) =>
+    float basis = ema(src, length)
+    float range = (useTrueRange) ? tr : (high - low)
+    float rangeEma = ema(range, length)
+    [basis, basis + rangeEma * mult, basis - rangeEma * mult]
+    
+[pineMiddle, pineUpper, pineLower] = f_kc(close, 5, 4, true)
+
+plot(pineMiddle)
+plot(pineUpper)
+plot(pineLower)
+RETURNS
+Keltner Channels.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+mult (float) Standard deviation factor
+useTrueRange (bool) An optional parameter. Specifies if True Range is used; default is true. If the value is false, the range will be calculated with the expression (high - low)
+SEE ALSO
+emaatrbb
+kcw
+Keltner Channels Width. The Keltner Channels Width is the difference between the upper and the lower Keltner Channels divided by the middle channel.
+kcw(series, length, mult) → series[float]
+kcw(series, length, mult, useTrueRange) → series[float]
+EXAMPLE
+//@version=4
+study('My Script')
+
+plot(kcw(close, 5, 4), color=color.yellow)
+
+// the same on pine
+f_kcw(src, length, mult, useTrueRange) =>
+    float basis = ema(src, length)
+    float range = (useTrueRange) ? tr : (high - low)
+    float rangeEma = ema(range, length)
+    
+    ((basis + rangeEma * mult) - (basis - rangeEma * mult)) / basis
+
+plot(f_kcw(close, 5, 4, true))
+RETURNS
+Keltner Channels Width.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+mult (float) Standard deviation factor
+useTrueRange (bool) An optional parameter. Specifies if True Range is used; default is true. If the value is false, the range will be calculated with the expression (high - low)
+SEE ALSO
+kcemaatrbb
+label
+Casts na to label
+label(x) → series[label]
+RETURNS
+The value of the argument after casting to label.
+SEE ALSO
+floatintboolcolorstringline
+label.delete
+Deletes the specified label object. If it has already been deleted, does nothing.
+label.delete(id) → void
+ARGUMENTS
+id (label) Label object to delete
+SEE ALSO
+label.new
+label.get_text
+Returns the text of this label object
+label.get_text(id) → series[string]
+EXAMPLE
+my_label = label.new(time, open, text="Open bar text", xloc=xloc.bar_time)
+a = label.get_text(my_label)
+label.new(time, close, text = a + " new", xloc=xloc.bar_time)
+RETURNS
+String object containing the text of this label
+ARGUMENTS
+id (label) Label object
+SEE ALSO
+label.new
+label.get_x
+Returns UNIX time or bar index (depending on the last xloc value set) of this label's position
+label.get_x(id) → series[integer]
+EXAMPLE
+my_label = label.new(time, open, text="Open bar text", xloc=xloc.bar_time)
+a = label.get_x(my_label)
+plot(time - label.get_x(my_label)) //draws zero plot
+RETURNS
+UNIX timestamp (in milliseconds) or bar index
+ARGUMENTS
+id (label) Label object
+SEE ALSO
+label.new
+label.get_y
+Returns price of this label's position
+label.get_y(id) → series[float]
+RETURNS
+Floating point value representing price
+ARGUMENTS
+id (label) Label object
+SEE ALSO
+label.new
+label.new
+Creates new label object
+label.new(x, y, text, xloc, yloc, color, style, textcolor, size, textalign) → series[label]
+EXAMPLE
+var label1 = label.new(bar_index, low, text="Hello, world!", style=label.style_circle)
+label.set_x(label1, 0)
+label.set_xloc(label1, time, xloc.bar_time)
+label.set_color(label1, color.red)
+label.set_size(label1, size.large)
+RETURNS
+Label ID object which may be passed to label.setXXX and label.getXXX functions
+ARGUMENTS
+x (series) Bar index (if xloc = xloc.bar_index) or bar UNIX time (if xloc = xloc.bar_time) of the label position. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+y (series) Price of the label position. It is taken into account only if yloc=yloc.price
+text (string) Label text. Default is empty string
+xloc (string) See description of x argument. Possible values: xloc.bar_index and xloc.bar_time. Default is xloc.bar_index
+yloc (string) Possible values are yloc.price, yloc.abovebar, yloc.belowbar. If yloc=yloc.price, y argument specifies the price of the label position. If yloc=yloc.abovebar, label is located above bar. If yloc=yloc.belowbar, label is located below bar. Default is yloc.price
+color (color) Color of the label border and arrow
+style (string) Label style. Possible values: label.style_none, label.style_xcross, label.style_cross, label.style_triangleup, label.style_triangledown, label.style_flag, label.style_circle, label.style_arrowup, label.style_arrowdown, label.style_label_up, label.style_label_down, label.style_label_left, label.style_label_right, label.style_label_center, label.style_square, label.style_diamond. Default is label.style_label_down
+textcolor (color) Text color
+size (string) Label size. Possible values: size.auto, size.tiny, size.small, size.normal, size.large, size.huge. Default value is size.normal.
+textalign (string) Label text alignment. Possible values: text.align_left, text.align_center, text.align_right. Default value is text.align_center.
+SEE ALSO
+label.deletelabel.set_xlabel.set_ylabel.set_xylabel.set_xloclabel.set_yloclabel.set_colorlabel.set_textcolorlabel.set_stylelabel.set_sizelabel.set_textalign
+label.set_color
+Sets label border and arrow color
+label.set_color(id, color) → void
+ARGUMENTS
+id (label) Label object
+color (color) New label border and arrow style
+SEE ALSO
+label.new
+label.set_size
+Sets arrow and text size of the specified label object.
+label.set_size(id, size) → void
+ARGUMENTS
+id (label) Label object
+size (string) Possible values: size.auto, size.tiny, size.small, size.normal, size.large, size.huge. Default value is size.auto.
+SEE ALSO
+size.autosize.tinysize.smallsize.normalsize.largesize.hugelabel.new
+label.set_style
+Sets label style
+label.set_style(id, style) → void
+ARGUMENTS
+id (label) Label object
+style (string) New label style. Possible values: label.style_none, label.style_xcross, label.style_cross, label.style_triangleup, label.style_triangledown, label.style_flag, label.style_circle, label.style_arrowup, label.style_arrowdown, label.style_label_up, label.style_label_down, label.style_label_left, label.style_label_right, label.style_label_center, label.style_square, label.style_diamond
+SEE ALSO
+label.new
+label.set_text
+Sets label text
+label.set_text(id, text) → void
+ARGUMENTS
+id (label) Label object
+text (string) New label text
+SEE ALSO
+label.new
+label.set_textalign
+Sets the alignment for the label text.
+label.set_textalign(id, textalign) → void
+ARGUMENTS
+id (label) Label object
+textalign (string) Label text alignment. Possible values: text.align_left, text.align_center, text.align_right.
+SEE ALSO
+text.align_lefttext.align_centertext.align_rightlabel.new
+label.set_textcolor
+Sets color of the label text
+label.set_textcolor(id, textcolor) → void
+ARGUMENTS
+id (label) Label object
+textcolor (color) New text color
+SEE ALSO
+label.new
+label.set_x
+Sets bar index or bar time (depending on the xloc) of the label position
+label.set_x(id, x) → void
+ARGUMENTS
+id (label) Label object
+x (series) New bar index or bar time of the label position. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+SEE ALSO
+label.new
+label.set_xloc
+Sets x-location and new bar index/time value
+label.set_xloc(id, x, xloc) → void
+ARGUMENTS
+id (label) Label object
+x (series) New bar index or bar time of the label position
+xloc (string) New x-location value
+SEE ALSO
+xloc.bar_indexxloc.bar_timelabel.new
+label.set_xy
+Sets bar index/time and price of the label position
+label.set_xy(id, x, y) → void
+ARGUMENTS
+id (label) Label object
+x (series) New bar index or bar time of the label position. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+y (series) New price of the label position
+SEE ALSO
+label.new
+label.set_y
+Sets price of the label position
+label.set_y(id, y) → void
+ARGUMENTS
+id (label) Label object
+y (series) New price of the label position
+SEE ALSO
+label.new
+label.set_yloc
+Sets new y-location calculation algorithm
+label.set_yloc(id, yloc) → void
+ARGUMENTS
+id (label) Label object
+yloc (string) New y-location value
+SEE ALSO
+yloc.priceyloc.abovebaryloc.belowbarlabel.new
+line
+Casts na to line
+line(x) → series[line]
+RETURNS
+The value of the argument after casting to line.
+SEE ALSO
+floatintboolcolorstringlabel
+line.delete
+Deletes the specified line object. If it has already been deleted, does nothing.
+line.delete(id) → void
+ARGUMENTS
+id (line) Line object to delete
+SEE ALSO
+line.new
+line.get_x1
+Returns UNIX time or bar index (depending on the last xloc value set) of the first point of the line
+line.get_x1(id) → series[integer]
+EXAMPLE
+my_line = line.new(time, open, time + 60 * 60 * 24, close, xloc=xloc.bar_time)
+a = line.get_x1(my_line)
+plot(time - line.get_x1(my_line)) //draws zero plot
+RETURNS
+UNIX timestamp (in milliseconds) or bar index
+ARGUMENTS
+id (line) Line object
+SEE ALSO
+line.new
+line.get_x2
+Returns UNIX time or bar index (depending on the last xloc value set) of the second point of the line
+line.get_x2(id) → series[integer]
+RETURNS
+UNIX timestamp (in milliseconds) or bar index
+ARGUMENTS
+id (line) Line object
+SEE ALSO
+line.new
+line.get_y1
+Returns price of the first point of the line
+line.get_y1(id) → series[float]
+RETURNS
+Price value
+ARGUMENTS
+id (line) Line object
+SEE ALSO
+line.new
+line.get_y2
+Returns price of the second point of the line
+line.get_y2(id) → series[float]
+RETURNS
+Price value
+ARGUMENTS
+id (line) Line object
+SEE ALSO
+line.new
+line.new
+Creates new line object
+line.new(x1, y1, x2, y2, xloc, extend, color, style, width) → series[line]
+EXAMPLE
+var line1 = line.new(0, low, bar_index, high, extend=extend.right)
+var line2 = line.new(time, open, time + 60 * 60 * 24, close, xloc=xloc.bar_time, style=line.style_dashed)
+line.set_x2(line1, 0)
+line.set_xloc(line1, time, time + 60 * 60 * 24, xloc.bar_time)
+line.set_color(line2, color.green)
+line.set_width(line2, 5)
+RETURNS
+Line ID object which may be passed to line.setXXX and line.getXXX functions
+ARGUMENTS
+x1 (series) Bar index (if xloc = xloc.bar_index) or bar UNIX time (if xloc = xloc.bar_time) of the first point of the line. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+y1 (series) Price of the first point of the line
+x2 (series) Bar index (if xloc = xloc.bar_index) or bar UNIX time (if xloc = xloc.bar_time) of the second point of the line. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+y2 (series) Price of the second point of the line
+xloc (string) See description of x1 argument. Possible values: xloc.bar_index and xloc.bar_time. Default is xloc.bar_index
+extend (string) If extend=extend.none, draws segment starting at point (x1, y1) and ending at point (x2, y2). If extend is equal to extend.right or extend.left, draws a ray starting at point (x1, y1) or (x2, y2), respectively. If extend=extend.both, draws a straight line that goes through these points. Default value is extend.none.
+color (color) Line color
+style (string) Line style. Possible values: line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_left, line.style_arrow_right, line.style_arrow_both
+width (integer) Line width in pixels
+SEE ALSO
+line.deleteline.set_x1line.set_y1line.set_xy1line.set_x2line.set_y2line.set_xy2line.set_xlocline.set_colorline.set_extendline.set_styleline.set_width
+line.set_color
+Sets the line color
+line.set_color(id, color) → void
+ARGUMENTS
+id (line) Line object
+color (color) New line color
+SEE ALSO
+line.new
+line.set_extend
+Sets extending type of this line object. If extend=extend.none, draws segment starting at point (x1, y1) and ending at point (x2, y2). If extend is equal to extend.right or extend.left, draws a ray starting at point (x1, y1) or (x2, y2), respectively. If extend=extend.both, draws a straight line that goes through these points.
+line.set_extend(id, extend) → void
+ARGUMENTS
+id (line) Line object
+extend (string) New extending type
+SEE ALSO
+extend.noneextend.rightextend.leftextend.bothline.new
+line.set_style
+Sets the line style
+line.set_style(id, style) → void
+ARGUMENTS
+id (line) Line object
+style (string) New line style
+SEE ALSO
+line.style_solidline.style_dottedline.style_dashedline.style_arrow_leftline.style_arrow_rightline.style_arrow_bothline.new
+line.set_width
+Sets the line width
+line.set_width(id, width) → void
+ARGUMENTS
+id (line) Line object
+width (integer) New line width in pixels
+SEE ALSO
+line.new
+line.set_x1
+Sets bar index or bar time (depending on the xloc) of the first point
+line.set_x1(id, x) → void
+ARGUMENTS
+id (line) Line object
+x (series) Bar index or bar time. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+SEE ALSO
+line.new
+line.set_x2
+Sets bar index or bar time (depending on the xloc) of the second point
+line.set_x2(id, x) → void
+ARGUMENTS
+id (line) Line object
+x (series) Bar index or bar time. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+SEE ALSO
+line.new
+line.set_xloc
+Sets x-location and new bar index/time values
+line.set_xloc(id, x1, x2, xloc) → void
+ARGUMENTS
+id (line) Line object
+x1 (series) Bar index or bar time of the first point
+x2 (series) Bar index or bar time of the second point
+xloc (string) New x-location value
+SEE ALSO
+xloc.bar_indexxloc.bar_timeline.new
+line.set_xy1
+Sets bar index/time and price of the first point
+line.set_xy1(id, x, y) → void
+ARGUMENTS
+id (line) Line object
+x (series) Bar index or bar time. Note that if xloc = xloc.bar_index then value of this argument should be less or equal to the index of current bar.
+y (series) Price
+SEE ALSO
+line.new
+line.set_xy2
+Sets bar index/time and price of the second point
+line.set_xy2(id, x, y) → void
+ARGUMENTS
+id (line) Line object
+x (series) Bar index or bar time
+y (series) Price
+SEE ALSO
+line.new
+line.set_y1
+Sets price of the first point
+line.set_y1(id, y) → void
+ARGUMENTS
+id (line) Line object
+y (series) Price
+SEE ALSO
+line.new
+line.set_y2
+Sets price of the second point
+line.set_y2(id, y) → void
+ARGUMENTS
+id (line) Line object
+y (series) Price
+SEE ALSO
+line.new
+linebreak
+Creates a ticker identifier for requesting Line Break values.
+linebreak(symbol, number_of_lines) → string
+EXAMPLE
+linebreak_tickerid = linebreak(syminfo.tickerid, 3)
+linebreak_close = security(linebreak_tickerid, timeframe.period, close)
+plot(linebreak_close)
+RETURNS
+String value of ticker id, that can be supplied to security function.
+ARGUMENTS
+symbol (string) Symbol ticker identifier.
+number_of_lines (integer) Number of line.
+SEE ALSO
+syminfo.tickeridsyminfo.tickersecurityheikinashirenkokagipointfigure
+linreg
+Linear regression curve. A line that best fits the prices specified over a user-defined time period. It is calculated using the least squares method. The result of this function is calculated using the formula: linreg = intercept + slope * (length - 1 - offset), where length is the y argument, offset is the z argument, intercept and slope are the values calculated with the least squares method on source series (x argument).
+linreg(source, length, offset) → series[float]
+RETURNS
+Linear regression curve.
+ARGUMENTS
+source (series) Source series.
+length (integer) Length.
+offset (integer) Offset.
+log
+Natural logarithm of any x > 0 is the unique `y` such that e^y = x
+log(x) → float
+log(x) → input float
+log(x) → const float
+log(x) → series[float]
+RETURNS
+The natural logarithm of x.
+SEE ALSO
+log10
+log10
+Base 10 logarithm of any x > 0 is the unique `y` such that 10^y = x
+log10(x) → float
+log10(x) → input float
+log10(x) → const float
+log10(x) → series[float]
+RETURNS
+The base 10 logarithm of x.
+SEE ALSO
+log
+lowest
+Lowest value for a given number of bars back.
+lowest(source, length) → series[float]
+lowest(length) → series[float]
+RETURNS
+Lowest value.
+ARGUMENTS
+source (series, integer)
+length (integer)
+REMARKS
+Two args version: x is a series and y is a length.
+One arg version: x is a length. Algorithm uses low as a source series.
+SEE ALSO
+highestlowestbarshighestbarsvaluewhen
+lowestbars
+Lowest value offset for a given number of bars back.
+lowestbars(source, length) → series[integer]
+lowestbars(length) → series[integer]
+RETURNS
+Offset to the lowest bar.
+ARGUMENTS
+source (series, integer)
+length (integer)
+REMARKS
+Two args version: x is a series and y is a length.
+One arg version: x is a length. Algorithm uses low as a source series.
+SEE ALSO
+lowesthighesthighestbarsbarssince
+macd
+MACD (moving average convergence/divergence). It is supposed to reveal changes in the strength, direction, momentum, and duration of a trend in a stock's price.
+macd(source, fastlen, slowlen, siglen) → [series[float], series[float], series[float]]
+EXAMPLE
+// Example 1
+study('MACD')
+[macdLine, signalLine, histLine] = macd(close, 12, 26, 9)
+plot(macdLine, color=color.blue)
+plot(signalLine, color=color.orange)
+plot(histLine, color=color.red, style=plot.style_histogram)
+
+// Example 2
+// If you need only one value, use placeholders '_' like this:
+study('MACD')
+[_, signalLine, _] = macd(close, 12, 26, 9)
+plot(signalLine, color=color.orange)
+RETURNS
+Tuple of three MACD series: MACD line, signal line and histogram line.
+ARGUMENTS
+source (series) Series of values to process.
+fastlen (integer) Fast Length parameter.
+slowlen (integer) Slow Length parameter.
+siglen (integer) Signal Length parameter.
+SEE ALSO
+smaema
+max
+Returns the greatest of multiple values
+max(x1, x2, ..., x10) -> const integer
+max(x1, x2, ..., x10) -> input integer
+max(x1, x2, ..., x10) -> integer
+max(x1, x2, ..., x10) -> series[integer]
+max(x1, x2, ..., x10) -> const float
+max(x1, x2, ..., x10) -> input float
+max(x1, x2, ..., x10) -> float
+max(x1, x2, ..., x10) -> series[float]
+EXAMPLE
+max(close, open)
+max(close, max(open, 42))
+RETURNS
+The greatest of multiple given values.
+SEE ALSO
+min
+max_bars_back
+Function sets the maximum number of bars that is available for historical reference of a given built-in or user variable. When operator '[]' is applied to a variable - it is a reference to a historical value of that variable.
+If an argument of an operator '[]' is a compile time constant value (e.g. 'v[10]', 'close[500]') then there is no need to use 'max_bars_back' function for that variable. Pine Script compiler will use that constant value as history buffer size.
+If an argument of an operator '[]' is a value, calculated at runtime (e.g. 'v[i]' where 'i' - is a series variable) then Pine Script attempts to autodetect the history buffer size at runtime. Sometimes it fails and the script crashes at runtime because it eventually refers to historical values that are out of the buffer. In that case you should use 'max_bars_back' to fix that problem manually.
+max_bars_back(var, num) → void
+EXAMPLE
+//@version=4
+study('My Script')
+close_() => close
+depth() => 400
+d = depth()
+v = close_()
+max_bars_back(v, 500)
+out = if bar_index > 0
+	v[d]
+else
+	v
+plot(out)
+RETURNS
+void
+ARGUMENTS
+var (series, color, bool) Series variable identifier for which history buffer should be resized. Possible values are: 'open', 'high', 'low', 'close', 'volume', 'time', or any user defined variable id.
+num (integer) History buffer size which is the number of bars that could be referenced for variable 'var'. This should be a literal integer.
+REMARKS
+At the moment 'max_bars_back' cannot be applied to built-ins like 'hl2', 'hlc3', 'ohlc4'. Please use multiple 'max_bars_back' calls as workaround here (e.g. instead of a single ‘max_bars_bars(hl2, 100)’ call you should call the function twice: ‘max_bars_bars(high, 100), max_bars_bars(low, 100)’).
+If the study or strategy 'max_bars_back' parameter is used, all variables in the study are affected. This may result in excessive memory usage and cause runtime problems. When possible (i.e. when the cause is a variable rather than a function), please use the max_bars_back function instead.
+SEE ALSO
+studystrategy
+mfi
+Money Flow Index. The Money Flow Index (MFI) is a technical oscillator that uses price and volume for identifying overbought or oversold conditions in an asset.
+mfi(series, length) → series[float]
+EXAMPLE
+//@version=4
+study('My Script')
+
+plot(mfi(close, 5), color=color.yellow)
+
+// the same on pine
+f_mfi(src, length) =>
+    float upper = sum(volume * (change(src) <= 0.0 ? 0.0 : src), length)
+    float lower = sum(volume * (change(src) >= 0.0 ? 0.0 : src), length)
+    
+    if na(lower)
+        float res = na
+        return = res
+    else
+        return = rsi(upper, lower)
+
+plot(f_mfi(close, 5))
+RETURNS
+Money Flow Index.
+ARGUMENTS
+series (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+rsisum
+min
+Returns the smallest of multiple values
+min(x1, x2, ..., x10) -> const integer
+min(x1, x2, ..., x10) -> input integer
+min(x1, x2, ..., x10) -> integer
+min(x1, x2, ..., x10) -> series[integer]
+min(x1, x2, ..., x10) -> const float
+min(x1, x2, ..., x10) -> input float
+min(x1, x2, ..., x10) -> float
+min(x1, x2, ..., x10) -> series[float]
+EXAMPLE
+min(close, open)
+min(close, min(open, 42))
+RETURNS
+The smallest of multiple given values.
+SEE ALSO
+max
+minute
+minute(time) → series[integer]
+RETURNS
+Minute (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+minutetimeyearmonthdayofmonthdayofweekhoursecond
+mom
+Momentum of x price and x price y bars ago. This is simply a difference x - x[y].
+mom(source, length) → series[float]
+RETURNS
+Momentum of x price and x price y bars ago.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Offset from the current bar to the previous bar.
+SEE ALSO
+change
+month
+month(time) → series[integer]
+RETURNS
+Month (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+monthtimeyeardayofmonthdayofweekhourminutesecond
+na
+Test value if it's a NaN.
+na(x) → bool
+na(x) → series[bool]
+RETURNS
+true if x is not a valid number (x is NaN), otherwise false.
+SEE ALSO
+nafixnannz
+nz
+Replaces NaN values with zeros (or given value) in a series.
+nz(x, y) → integer
+nz(x, y) → float
+nz(x, y) → color
+nz(x, y) → bool
+nz(x, y) → series[integer]
+nz(x, y) → series[float]
+nz(x, y) → series[color]
+nz(x, y) → series[bool]
+nz(x) → integer
+nz(x) → float
+nz(x) → color
+nz(x) → bool
+nz(x) → series[integer]
+nz(x) → series[float]
+nz(x) → series[color]
+nz(x) → series[bool]
+EXAMPLE
+nz(sma(close, 100))
+RETURNS
+Two args version: returns x if it's a valid (not NaN) number, otherwise y
+One arg version: returns x if it's a valid (not NaN) number, otherwise 0
+ARGUMENTS
+x (series) Series of values to process.
+y (float) Value that will be inserted instead of all NaN values in x series.
+SEE ALSO
+nanafixnan
+offset
+Shifts series x on the y bars to the right.
+offset(source, offset) → series[bool]
+offset(source, offset) → series[color]
+offset(source, offset) → series[integer]
+offset(source, offset) → series[float]
+RETURNS
+Shifted series.
+ARGUMENTS
+source (series) Series of values to process.
+offset (integer) Number of bars to offset, must be a positive number. Negative offsets are not supported.
+REMARKS
+If you need to shift the series to the left, use combination of offset and plot (with offset argument).
+SEE ALSO
+plot
+percentile_linear_interpolation
+Calculates percentile using method of linear interpolation between the two nearest ranks.
+percentile_linear_interpolation(source, length, percentage) → series[float]
+RETURNS
+z-th percentile of x series for y bars back.
+ARGUMENTS
+source (series) Series of values to process (source).
+length (integer) Number of bars back (length).
+percentage (float) Percentage, a number from range 0..100.
+REMARKS
+Note that a percentile calculated using this method will NOT always be a member of the input data set.
+SEE ALSO
+percentile_nearest_rank
+percentile_nearest_rank
+Calculates percentile using method of Nearest Rank.
+percentile_nearest_rank(source, length, percentage) → series[float]
+RETURNS
+z-th percentile of x series for y bars back.
+ARGUMENTS
+source (series) Series of values to process (source).
+length (integer) Number of bars back (length).
+percentage (float) Percentage, a number from range 0..100.
+REMARKS
+Using the Nearest Rank method on lengths less than 100 bars back can result in the same number being used for more than one percentile.
+A percentile calculated using the Nearest Rank method will always be a member of the input data set.
+The 100th percentile is defined to be the largest value in the input data set.
+SEE ALSO
+percentile_linear_interpolation
+percentrank
+Percent rank is the percents of how many previous values was less than or equal to the current value of given series.
+percentrank(source, length) → series[float]
+RETURNS
+Percent rank of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+pivothigh
+This function returns price of the pivot high point. It returns 'NaN', if there was no pivot high point.
+pivothigh(source, leftbars, rightbars) → series[float]
+pivothigh(leftbars, rightbars) → series[float]
+EXAMPLE
+study("PivotHigh", overlay=true)
+leftBars = input(2)
+rightBars=input(2)
+ph = pivothigh(leftBars, rightBars)
+plot(ph, style=plot.style_cross, linewidth=3, color= color.red, offset=-rightBars)
+RETURNS
+Price of the point or 'NaN'.
+ARGUMENTS
+source (series) An optional parameter. Data series to calculate the value. 'High' by defualt.
+leftbars (series) Left strength.
+rightbars (series) Right strength.
+REMARKS
+If parameters 'leftbars' or 'rightbars' are series you should use max_bars_back function for the 'source' variable.
+pivotlow
+This function returns price of the pivot low point. It returns 'NaN', if there was no pivot low point.
+pivotlow(source, leftbars, rightbars) → series[float]
+pivotlow(leftbars, rightbars) → series[float]
+EXAMPLE
+study("PivotLow", overlay=true)
+leftBars = input(2)
+rightBars=input(2)
+pl = pivotlow(close, leftBars, rightBars)
+plot(pl, style=plot.style_cross, linewidth=3, color= color.blue, offset=-rightBars)
+RETURNS
+Price of the point or 'NaN'.
+ARGUMENTS
+source (series) An optional parameter. Data series to calculate the value. 'Low' by default.
+leftbars (series) Left strength.
+rightbars (series) Right strength.
+REMARKS
+If parameters 'leftbars' or 'rightbars' are series you should use max_bars_back function for the 'source' variable.
+plot
+Plots a series of data on the chart.
+plot(series, title, color, linewidth, style, trackprice, transp, histbase, offset, join, editable, show_last, display) → plot
+EXAMPLE
+plot(high+low, title='Title', color=#00ffaa, linewidth=2, style=plot.style_area, transp=70, offset=15, trackprice=true)
+
+// You may fill the background between any two plots with a fill() function:
+p1 = plot(open)
+p2 = plot(close)
+fill(p1, p2, color=color.green)
+RETURNS
+A plot object, that can be used in fill
+ARGUMENTS
+series (series) Series of data to be plotted. Required argument.
+title (const string) Title of the plot.
+color (color) Color of the plot. You can use constants like 'color=color.red' or 'color=#ff001a' as well as complex expressions like 'color = close >= open ? color.green : color.red'. Optional argument.
+linewidth (input integer) Width of the plotted line, use values from 1 to 4. Default value is 1. Not applicable to every style.
+style (input integer) Type of the plot. Possible values are: plot.style_line, plot.style_stepline, plot.style_histogram, plot.style_cross, plot.style_area, plot.style_columns, plot.style_circles. Default value is plot.style_line.
+transp (input integer) Transparency of the plot, applicable only to the plot.style_area style. Possible values are from 0 (not transparent) to 100 (invisible). Optional argument.
+trackprice (input bool) If true then a horizontal price line will be shown at the level of the last study value. Default is false.
+histbase (input float) Price value which will be considered as a start base point when rendering plot with plot.style_histogram or plot.style_columns style. Default is 0.0.
+offset (integer) Shifts the plot to the left or to the right on the given number of bars. Default is 0.
+join (input bool) If true then plot points will be joined with line, applicable only to plot.style_cross and plot.style_circles styles. Default is false.
+editable (const bool) If true then plot style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of bars (from the last bar back to the past) to plot on chart.
+display (const integer) Controls where the plot is displayed. Possible values are: display.none, display.all. Default is display.all
+SEE ALSO
+plotshapeplotcharplotarrowbarcolorbgcolorfill
+plotarrow
+Plots up and down arrows on the chart. Up arrow is drawn at every indicator positive value, down arrow is drawn at every negative value. If indicator returns na then no arrow is drawn. Arrows has different height, the more absolute indicator value the longer arrow is drawn.
+plotarrow(series, title, colorup, colordown, transp, offset, minheight, maxheight, editable, show_last, display) → void
+EXAMPLE
+study("plotarrow example", overlay=true)
+codiff = close - open
+plotarrow(codiff, colorup=color.teal, colordown=color.orange, transp=40)
+ARGUMENTS
+series (series) Series of data to be plotted as arrows. Required argument.
+title (const string) Title of the plot.
+colorup (input color) Color of the up arrows. You can use constants like 'color=color.red' or 'color=#ff001a', expressions are not allowed. Optional argument.
+colordown (input color) Color of the down arrows. You can use constants like 'color=color.red' or 'color=#ff001a', expressions are not allowed. Optional argument.
+transp (input integer) Transparency of the arrows. Possible values are from 0 (not transparent) to 100 (invisible). Optional argument.
+offset (integer) Shifts arrows to the left or to the right on the given number of bars. Default is 0.
+minheight (input integer) Minimal possible arrow height in pixels. Default is 5.
+maxheight (input integer) Maximum possible arrow height in pixels. Default is 100.
+editable (const bool) If true then plotarrow style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of arrows (from the last bar back to the past) to plot on chart.
+display (const integer) Controls where the plot is displayed. Possible values are: display.none, display.all. Default is display.all
+REMARKS
+Use plotarrow function in conjunction with 'overlay=true' study parameter!
+SEE ALSO
+plotplotshapeplotcharbarcolorbgcolor
+plotbar
+Plots ohlc bars on the chart.
+plotbar(open, high, low, close, title, color, editable, show_last, display) → void
+EXAMPLE
+plotbar(open, high, low, close, title='Title', color = open < close ? color.green : color.red)
+ARGUMENTS
+open (series) Open series of data to be used as open values of bars. Required argument.
+high (series) High series of data to be used as high values of bars. Required argument.
+low (series) Low series of data to be used as low values of bars. Required argument.
+close (series) Close series of data to be used as close values of bars. Required argument.
+title (const string) Title of the plotbar. Optional argument.
+color (color) Color of the ohlc bars. You can use constants like 'color=color.red' or 'color=#ff001a' as well as complex expressions like 'color = close >= open ? color.green : color.red'. Optional argument.
+editable (const bool) If true then plotbar style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of bars (from the last bar back to the past) to plot on chart.
+display (const integer) Controls where the plot is displayed. Possible values are: display.none, display.all. Default is display.all
+REMARKS
+Even if one value of open, high, low or close equal NaN then bar no draw.
+The maximal value of open, high, low or close will be set as 'high', and the minimal value will be set as 'low'.
+SEE ALSO
+plotcandle
+plotcandle
+Plots candles on the chart.
+plotcandle(open, high, low, close, title, color, wickcolor, editable, show_last, bordercolor, display) → void
+EXAMPLE
+plotcandle(open, high, low, close, title='Title', color = open < close ? color.green : color.red, wickcolor=color.black)
+ARGUMENTS
+open (series) Open series of data to be used as open values of candles. Required argument.
+high (series) High series of data to be used as high values of candles. Required argument.
+low (series) Low series of data to be used as low values of candles. Required argument.
+close (series) Close series of data to be used as close values of candles. Required argument.
+title (const string) Title of the plotcandles. Optional argument.
+color (color) Color of the candles. You can use constants like 'color=color.red' or 'color=#ff001a' as well as complex expressions like 'color = close >= open ? color.green : color.red'. Optional argument.
+wickcolor (input color) The color of the wick of candles. Must be an input or constant value. An optional argument.
+editable (const bool) If true then plotcandle style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of candles (from the last bar back to the past) to plot on chart.
+bordercolor (input color) The border color of candles. Must be an input or constant value. An optional argument.
+display (const integer) Controls where the plot is displayed. Possible values are: display.none, display.all. Default is display.all
+REMARKS
+Even if one value of open, high, low or close equal NaN then bar no draw.
+The maximal value of open, high, low or close will be set as 'high', and the minimal value will be set as 'low'.
+SEE ALSO
+plotbar
+plotchar
+Plots visual shapes using any given one Unicode character on the chart.
+plotchar(series, title, char, location, color, transp, offset, text, textcolor, editable, size, show_last, display) → void
+EXAMPLE
+study('plotchar example', overlay=true)
+data = close >= open
+plotchar(data, char='❄')
+ARGUMENTS
+series (series) Series of data to be plotted as shapes. Series is treated as a series of boolean values for all location values except location.absolute. Required argument.
+title (const string) Title of the plot.
+char (input string) Character to use as a visual shape.
+location (input string) Location of shapes on the chart. Possible values are: location.abovebar, location.belowbar, location.top, location.bottom, location.absolute. Default value is location.abovebar.
+color (color) Color of the shapes. You can use constants like 'color=color.red' or 'color=#ff001a' as well as complex expressions like 'color = close >= open ? color.green : color.red'. Optional argument.
+transp (input integer) Transparency of the shapes. Possible values are from 0 (not transparent) to 100 (invisible). Optional argument.
+offset (integer) Shifts shapes to the left or to the right on the given number of bars. Default is 0.
+text (const string) Text to display with the shape. You can use multiline text, to separate lines use '\n' escape sequence. Example: 'line one\nline two'
+textcolor (color) Color of the text. You can use constants like 'textcolor=color.red' or 'textcolor=#ff001a' as well as complex expressions like 'textcolor = close >= open ? color.green : color.red'. Optional argument.
+editable (const bool) If true then plotchar style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of chars (from the last bar back to the past) to plot on chart.
+size (const string) Size of characters on the chart. Possible values are: size.auto, size.tiny, size.small, size.normal, size.large, size.huge. Default is size.auto.
+display (const integer) Controls where the plot is displayed. Possible values are: display.none, display.all. Default is display.all
+REMARKS
+Use plotchar function in conjunction with 'overlay=true' study parameter!
+SEE ALSO
+plotplotshapeplotarrowbarcolorbgcolor
+plotshape
+Plots visual shapes on the chart.
+plotshape(series, title, style, location, color, transp, offset, text, textcolor, editable, size, show_last, display) → void
+EXAMPLE
+study('plotshape example 1', overlay=true)
+data = close >= open
+plotshape(data, style=shape.xcross)
+ARGUMENTS
+series (series) Series of data to be plotted as shapes. Series is treated as a series of boolean values for all location values except location.absolute. Required argument.
+title (const string) Title of the plot.
+style (input string) Type of the plot. Possible values are: shape.xcross, shape.cross, shape.triangleup, shape.triangledown, shape.flag, shape.circle, shape.arrowup, shape.arrowdown, shape.labelup, shape.labeldown, shape.square, shape.diamond. Default value is shape.xcross.
+location (input string) Location of shapes on the chart. Possible values are: location.abovebar, location.belowbar, location.top, location.bottom, location.absolute. Default value is location.abovebar.
+color (color) Color of the shapes. You can use constants like 'color=color.red' or 'color=#ff001a' as well as complex expressions like 'color = close >= open ? color.green : color.red'. Optional argument.
+transp (input integer) Transparency of the shapes. Possible values are from 0 (not transparent) to 100 (invisible). Optional argument.
+offset (integer) Shifts shapes to the left or to the right on the given number of bars. Default is 0.
+text (const string) Text to display with the shape. You can use multiline text, to separate lines use '\n' escape sequence. Example: 'line one\nline two'
+textcolor (color) Color of the text. You can use constants like 'textcolor=color.red' or 'textcolor=#ff001a' as well as complex expressions like 'textcolor = close >= open ? color.green : color.red'. Optional argument.
+editable (const bool) If true then plotshape style will be editable in Format dialog. Default is true.
+show_last (input integer) If set, defines the number of shapes (from the last bar back to the past) to plot on chart.
+size (const string) Size of shapes on the chart. Possible values are: size.auto, size.tiny, size.small, size.normal, size.large, size.huge. Default is size.auto.
+display (const integer) Controls where the plot is displayed. Possible values are: display.none, display.all. Default is display.all
+REMARKS
+Use plotshape function in conjunction with 'overlay=true' study parameter!
+SEE ALSO
+plotplotcharplotarrowbarcolorbgcolor
+pointfigure
+Creates a ticker identifier for requesting Point & Figure values.
+pointfigure(symbol, source, style, param, reversal) → string
+EXAMPLE
+pnf_tickerid = pointfigure(syminfo.tickerid, "hl", "Traditional", 1, 3)
+pnf_close = security(pnf_tickerid, timeframe.period, close)
+plot(pnf_close)
+RETURNS
+String value of ticker id, that can be supplied to security function.
+ARGUMENTS
+symbol (string) Symbol ticker identifier.
+source (string) The source for calculating Renko. Possible values are: 'hl', 'close'.
+style (string) Box Size Assignment Method: 'ATR', 'Traditional'.
+param (float) ATR Length if `style` is equal to 'ATR', or Box Size if `style` is equal to 'Traditional'.
+reversal (integer) Reversal amount.
+SEE ALSO
+syminfo.tickeridsyminfo.tickersecurityheikinashirenkolinebreakkagi
+pow
+Mathematical power function.
+pow(base, exponent) → float
+pow(base, exponent) → input float
+pow(base, exponent) → const float
+pow(base, exponent) → series[float]
+EXAMPLE
+pow(close, 2)
+RETURNS
+x raised to the power of y. If x is a series, it is calculated elementwise.
+ARGUMENTS
+base Specify the base to use.
+exponent (float) Specifies the exponent.
+SEE ALSO
+sqrtexp
+quandl
+Requests quandl data for a symbol.
+quandl(ticker, gaps, index) → series[float]
+EXAMPLE
+f = quandl("CFTC/SB_FO_ALL", barmerge.gaps_off, 0)
+plot(f)
+RETURNS
+Requested series.
+ARGUMENTS
+ticker (string) Symbol. Note that the name of a time series and quandl data feed should be divided by a forward slash. For example: "CFTC/SB_FO_ALL".
+gaps (const bool) Merge strategy for the requested data (requested data automatically merges with the main series: OHLC data). Possible values include: barmerge.gaps_on, barmerge.gaps_off. barmerge.gaps_on - requested data is merged with possible gaps (na values). barmerge.gaps_off - requested data is merged continuously without gaps, all the gaps are filled with the previous, nearest existing values. Default value is barmerge.gaps_off
+index (integer) A quandl time-series column index.
+REMARKS
+You can learn more about how to find ticker and index values in our Help Center.
+SEE ALSO
+securitysyminfo.tickerid
+renko
+Creates a ticker identifier for requesting Renko values.
+renko(symbol, style, param) → string
+EXAMPLE
+renko_tickerid = renko(syminfo.tickerid, "ATR", 10)
+renko_close = security(renko_tickerid, timeframe.period, close)
+plot(renko_close)
+RETURNS
+String value of ticker id, that can be supplied to security function.
+ARGUMENTS
+symbol (string) Symbol ticker identifier.
+style (string) Box Size Assignment Method: 'ATR', 'Traditional'.
+param (float) ATR Length if `style` is equal to 'ATR', or Box Size if `style` is equal to 'Traditional'.
+SEE ALSO
+syminfo.tickeridsyminfo.tickersecurityheikinashilinebreakkagipointfigure
+rising
+Test if the x series is now rising for y bars long.
+rising(source, length) → series[bool]
+RETURNS
+true if current x is greater than any previous x for y bars back, false otherwise.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+falling
+rma
+Moving average used in RSI. It is the exponentially weighted moving average with alpha = 1 / length.
+rma(source, length) → series[float]
+EXAMPLE
+plot(rma(close, 15))
+
+// same on pine, but much less efficient
+pine_rma(x, y) =>
+	alpha = y
+    sum = 0.0
+    sum := (x + (alpha - 1) * nz(sum[1])) / alpha
+plot(pine_rma(close, 15))
+RETURNS
+Exponential moving average of x with alpha = 1 / y.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+smaemawmavwmaswmaalmarsi
+roc
+Function roc (rate of change) showing the difference between current value of x and the value of x that was y days ago.
+roc(source, length) → series[float]
+RETURNS
+The rate of change of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+round
+The round function returns the value of the argument rounded to the nearest integer, with ties rounding up.
+round(x) → integer
+round(x) → input integer
+round(x) → const integer
+round(x) → series[integer]
+RETURNS
+The value of the argument rounded to the nearest integer.
+SEE ALSO
+ceilfloor
+rsi
+Relative strength index. It is calculated based on rma's of upward and downward change of x.
+rsi(x, y) → series[float]
+EXAMPLE
+plot(rsi(close, 7))
+
+// same on pine, but less efficient
+pine_rsi(x, y) => 
+    u = max(x - x[1], 0) // upward change
+    d = max(x[1] - x, 0) // downward change
+    rs = rma(u, y) / rma(d, y)
+    res = 100 - 100 / (1 + rs)
+    res
+
+plot(pine_rsi(close, 7))
+RETURNS
+Relative strength index.
+ARGUMENTS
+x (series)
+y (integer, series)
+REMARKS
+If x is a series and y is integer then x is a source series and y is a length.
+If x is a series and y is a series then x and y are considered to be 2 calculated MAs for upward and downward changes.
+SEE ALSO
+rma
+sar
+Parabolic SAR (parabolic stop and reverse) is a method devised by J. Welles Wilder, Jr., to find potential reversals in the market price direction of traded goods.
+sar(start, inc, max) → series[float]
+EXAMPLE
+plot(sar(0.2, 0.2, .2), style=plot.style_cross, linewidth=3)
+RETURNS
+Parabolic SAR.
+ARGUMENTS
+start (float) Start.
+inc (float) Increment.
+max (float) Maximum.
+second
+second(time) → series[integer]
+RETURNS
+Second (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+secondtimeyearmonthdayofmonthdayofweekhourminute
+security
+Request another symbol/resolution
+security(symbol, resolution, expression, gaps, lookahead) → series[float]
+security(symbol, resolution, expression, gaps, lookahead) → series[integer]
+security(symbol, resolution, expression, gaps, lookahead) → series[bool]
+security(symbol, resolution, expression, gaps, lookahead) → series[color]
+security(symbol, resolution, expression, gaps, lookahead) → fun_arg__
+EXAMPLE
+s = security("MSFT", "D", close) // 1 Day
+plot(s)
+
+expr = sma(close, 10)
+s1 = security("AAPL", "240", expr) // 240 Minutes
+plot(s1)
+
+// To avoid difference in calculation on history/realtime you can request not latest values and use merge strategy flags as follows:
+s2=security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_on)
+plot(s2)
+f() => [open, high]
+[o, h] = security(syminfo.tickerid, "D", f())
+[l, c] = security(syminfo.tickerid, "D", [low, close])
+plot((o + h + l + c) / 4)
+RETURNS
+Requested series.
+ARGUMENTS
+symbol (string) Symbol.
+resolution (string) Resolution.
+expression An expression can be calculated and returned from the security call. It can be a series or a tuple containing elements that can be cast to series.
+gaps (const bool) Merge strategy for the requested data (requested data automatically merges with the main series OHLC data). Possible values: barmerge.gaps_on, barmerge.gaps_off. barmerge.gaps_on - requested data is merged with possible gaps (na values). barmerge.gaps_off - requested data is merged continuously without gaps, all the gaps are filled with the previous nearest existing values. Default value is barmerge.gaps_off.
+lookahead (const bool) Merge strategy for the requested data position. Possible values: barmerge.lookahead_on, barmerge.lookahead_off. Default value is barmerge.lookahead_off starting from version 3. Note that behavour is the same on real-time, and differs only on history.
+REMARKS
+PineScript code that uses this function could calculate differently on history and real-time data.
+The resolution argument allowable values are:
+1S, 5S, 15S, 30S - for seconds intervals (chart resolution should be less than or equal to the requested resolution)
+from 1 to 1440 for minutes
+from 1D to 365D for days
+from 1W to 52W for weeks
+from 1M to 12M for months
+SEE ALSO
+syminfo.tickersyminfo.tickeridtimeframe.periodcorrelationbarmerge.lookahead_offbarmerge.lookahead_on
+sign
+Sign (signum) of x is zero if the x is zero, 1.0 if the x is greater than zero, -1.0 if the x is less than zero.
+sign(x) → float
+sign(x) → input float
+sign(x) → const float
+sign(x) → series[float]
+RETURNS
+The sign of the argument.
+sin
+The sin function returns the trigonometric sine of an angle.
+sin(x) → float
+sin(x) → input float
+sin(x) → const float
+sin(x) → series[float]
+RETURNS
+The trigonometric sine of an angle.
+ARGUMENTS
+x Angle, in radians.
+sma
+The sma function returns the moving average, that is the sum of last y values of x, divided by y.
+sma(source, length) → series[float]
+EXAMPLE
+plot(sma(close, 15))
+
+// same on pine, but much less efficient
+pine_sma(x, y) =>
+    sum = 0.0
+    for i = 0 to y - 1
+        sum := sum + x[i] / y
+    sum
+plot(pine_sma(close, 15))
+RETURNS
+Simple moving average of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+emarmawmavwmaswmaalma
+sqrt
+Square root of any x >= 0 is the unique y >= 0 such that y^2 = x
+sqrt(x) → float
+sqrt(x) → input float
+sqrt(x) → const float
+sqrt(x) → series[float]
+RETURNS
+The square root of x.
+SEE ALSO
+pow
+stdev
+stdev(source, length) → series[float]
+RETURNS
+Standard deviation.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+REMARKS
+This is a biased estimation of standard deviation.
+SEE ALSO
+devvariance
+stoch
+Stochastic. It is calculated by a formula: 100 * (close - lowest(low, length)) / (highest(high, length) - lowest(low, length))
+stoch(source, high, low, length) → series[float]
+RETURNS
+Stochastic.
+ARGUMENTS
+source (series) Source series.
+high (series) Series of high.
+low (series) Series of low.
+length (integer) Length (number of bars back).
+SEE ALSO
+cog
+str.replace_all
+Replaces each occurrence of the target string in the source string with the replacement string.
+str.replace_all(source, target, replacement) → string
+str.replace_all(source, target, replacement) → series[string]
+RETURNS
+Processed string.
+ARGUMENTS
+source (string) Source string
+target (string) String to be replaced
+replacement (string) String to be substituted for each occurrence of target string
+strategy
+The function sets a number of strategy properties.
+strategy(title, shorttitle, overlay, format, precision, scale, pyramiding, calc_on_order_fills, calc_on_every_tick, max_bars_back, backtest_fill_limits_assumption, default_qty_type, default_qty_value, initial_capital, currency, slippage, commission_type, commission_value, process_orders_on_close, close_entries_rule) → void
+EXAMPLE
+strategy(title='MyStrategy')
+strategy(title="MyStrategy", shorttitle="MS", pyramiding = 10)
+ARGUMENTS
+title (const string) study title that would be seen in Indicators/Strategies widget. Argument IS REQUIRED.
+shorttitle (const string) study short title that would be seen in the chart legend. Argument is optional.
+overlay (const bool) if true the study will be added as an overlay for the main series. If false - it would be added on a separate chart pane. Default is false.
+format (const string) type of formatting study values on the price axis. Possible values are: format.inherit, format.price, format.volume. Default is format.inherit.
+precision (const integer) number of digits after the floating point for study values on the price axis. Must be a non negative integer and not greater than 16. If omitted, using formatting from parent series. If format is format.inherit and this argument is set, then format becomes format.price.
+scale (const integer) price scale that the indicator should be attached to. Possible values are: scale.right, scale.left, scale.none. Value scale.none can be applied only in combination with 'overlay=true' setting. If omitted, using scale from main series.
+pyramiding (const integer) Maximum number of entries allowed in the same direction. If the value is 0, only one entry order in the same direction can be opened, any additional entry order is rejected. The defualt value is 0.
+calc_on_order_fills (const bool) Additional one time intrabar order calculation. If the parameter is set to 'true', then the strategy is recalculated once intrabar after an order is filled (not only at close of the bar). The default value is 'false'.
+calc_on_every_tick (const bool) Additional intrabar strategy calculations. If the parameter is 'true', then the strategy will calculate on every tick in real-time, rather than on bars' closes. The parameter does not affect strategy calculation on historical data. The default value is 'false'.
+max_bars_back (const integer) Maximum number of bars available for a strategy for historical reference. This parameter is applied to every built-in or user variable in the script if there is a reference to historical data of a variable in the script code (‘[]’ operator is used). Variable buffer sizes in the Pine Script are typically autodetected. This however is not possible in certain cases which is why the parameter allows a user to manually set the lower bound of this value. NOTE: using of the max_bars_back function instead of the parameter is optimal because it applies to only one variable.
+backtest_fill_limits_assumption (const integer) Limit order execution assumption. Limit orders are filled intrabar only if market price exceeds the limit order level by the specified number of in ticks.
+default_qty_type (const string) Parameter to determine the number of contracts/shares/lots/units to trade, if the 'qty' = 'NaN'. The allowed values are: strategy.fixed (fixed quantity by default), strategy.cash (specified in currency of the symbol and the amount is converted into quantity), strategy.percent_of_equity (% of currently available equity).
+default_qty_value (const float) Number of contracts/shares/lots/units if 'default_qty_type'=strategy.fixed is used; or amount of cash in currency of the symbol if 'default_qty_type'=strategy.cash is used; or number of percents of currently available equity if 'default_qty_type'=strategy.percent_of_equity is used.
+currency (const string) Account currency for this strategy. Possible values are: NONE, USD, EUR, AUD, GBP, NZD, CAD, CHF, HKD, JPY, NOK, SEK, SGD, TRY, ZAR
+linktoseries (const bool) if true then the study will be always on the same pane and same price scale as the main series. Should be used only in combination with 'overlay=true'. Default is false.
+slippage (const integer) Slippage for market and stop orders in points impairs the filling price of market and stop-market orders for a specified number of points.
+commission_type (const string) Commission type for an order. The allowed values are: strategy.commission.percent (a percentage of the cash volume of order), strategy.commission.cash_per_contract (money displayed in the account currency per contract), strategy.commission.cash_per_order (money displayed in the account currency per order).
+commission_value (const float) Commission value for an order. Depending on the type selected (commission_type) includes percentage or money.
+process_orders_on_close (const bool) When set to `true`, generates an additional attempt to execute orders after a bar closes and strategy calculations are completed. If the orders are market orders, the broker emulator executes them before the next bar's open. If the orders are conditional on price, they will only be filled if the price conditions are met. This option is useful if you wish to close positions on the current bar. The default value is 'false'.
+close_entries_rule (const string) Determines the order in which orders are closed. Allowed values are: 'FIFO' or 'ANY'. FIFO (First-In, First-Out) means that when several trades are open, the earliest trades must be closed first. This rule applies to stocks, futures and US forex (NFA Compliance Rule 2-43b). 'ANY' means that trades may be closed in any order; this is allowed in non-US forex. The default value is 'FIFO'.
+REMARKS
+Every strategy script must have one strategy call.
+PineScript code that uses argument calc_on_every_tick=true could calculate differently on history and real-time data.
+When using non-standard types of chart as a basis for strategy, you need to realize that the result will be different. The orders will be executed at the prices of this chart (e.g.for Heikin Ashi it’ll take Heikin Ashi prices (the average ones) not the real market prices). Therefore we highly recommend you to use standard chart type for strategies.
+strategy.cancel
+It is a command to cancel/deactivate pending orders by referencing their names, which were generated by the functions: strategy.order, strategy.entry and strategy.exit.
+strategy.cancel(id, when) → void
+EXAMPLE
+strategy(title = "simple order cancellation example")
+conditionForBuy = open > high[1]
+strategy.entry("long", true, 1, limit = low, when = conditionForBuy) // enter long using limit order at low price of current bar if conditionForBuy is true
+strategy.cancel("long", when = not conditionForBuy) // cancel the entry order with name "long" if conditionForBuy is false
+ARGUMENTS
+id (string) A required parameter. The order identifier. It is possible to cancel an order by referencing its identifier.
+when (bool) An optional parameter. Condition to cancel an order with specified ID. If condition is true, then the order with specified ID will be cancelled. Default value is 'true'.
+strategy.cancel_all
+It is a command to cancel/deactivate all pending orders, which were generated by the functions: strategy.order, strategy.entry and strategy.exit.
+strategy.cancel_all(when) → void
+EXAMPLE
+strategy(title = "simple all orders cancellation example")
+conditionForBuy1 = open > high[1]
+strategy.entry("long entry 1", true, 1, limit = low, when = conditionForBuy1) // enter long by limit if conditionForBuy1 is true
+conditionForBuy2 = conditionForBuy1 and open[1] > high[2]
+strategy.entry("long entry 2", true, 1, limit = lowest(low, 2), when = conditionForBuy2) // enter long by limit if conditionForBuy2 is true
+conditionForStopTrading = open < lowest(low, 2)
+strategy.cancel_all(conditionForStopTrading) // cancel both limit orders if the conditon conditionForStopTrading is true
+ARGUMENTS
+when (bool) An optional parameter. Condition to cancel all orders. If condition is true, then all active orders will be cancelled. Default value is 'true'.
+strategy.close
+It is a command to exit from the entry with the specified ID. If there were multiple entry orders with the same ID, all of them are exited at once. If there are no open entries with the specified ID by the moment the command is triggered, the command will not come into effect. The command uses market order. Every entry is closed by a separate market order.
+strategy.close(id, when, comment, qty, qty_percent) → void
+EXAMPLE
+strategy("closeEntry Demo", overlay=false)
+strategy.entry("buy", true, when = open > close)
+strategy.close("buy", when = open < close, qty_percent = 50, comment = "close buy entry for 50%")
+plot(strategy.position_size)
+ARGUMENTS
+id (string) A required parameter. The order identifier. It is possible to close an order by referencing its identifier.
+when (bool) An optional parameter. Condition of the command.
+qty (float) An optional parameter. Number of contracts/shares/lots/units to exit a trade with. The default value is 'NaN'.
+qty_percent (float) An optional parameter. Defines the percentage of entered contracts/shares/lots/units to exit a trade with. When its value is not NaN, its priority is higher than that of the 'qty' parameter. Its value can range from 0 to 100. If 'qty' is NaN, the default value of 'qty_percent' is 100.
+comment (string) An optional parameter. Additional notes on the order.
+strategy.close_all
+It is a command to exit from current market position making it flat. If there is no open market position by the moment the command is triggered, the command will not come into effect.
+strategy.close_all(when, comment) → void
+EXAMPLE
+strategy("closeAll Demo", overlay=false)
+strategy.entry("buy", true, when = open > close)
+strategy.close_all(when = open < close, comment = "close all entries")
+plot(strategy.position_size)
+ARGUMENTS
+when (bool) An optional parameter. Condition of the command.
+comment (string) An optional parameter. Additional notes on the order.
+strategy.entry
+It is a command to enter market position. If an order with the same ID is already pending, it is possible to modify the order. If there is no order with the specified ID, a new order is placed. To deactivate an entry order, the command strategy.cancel or strategy.cancel_all should be used. In comparison to the function strategy.order, the function strategy.entry is affected by pyramiding and it can reverse market position correctly. If both 'limit' and 'stop' parameters are 'NaN', the order type is market order.
+strategy.entry(id, long, qty, limit, stop, oca_name, oca_type, comment, when) → void
+EXAMPLE
+strategy(title = "simple gap strategy example")
+strategy.entry("enter long", true, 1, when = open > high[1]) // enter long by market if current open great then previous high
+strategy.entry("enter short", false, 1, when = open < low[1]) // enter short by market if current open less then previous low
+ARGUMENTS
+id (string) A required parameter. The order identifier. It is possible to cancel or modify an order by referencing its identifier.
+long (bool) A required parameter. Market position direction: 'true' or 'strategy.long' is for long, 'false' or 'strategy.short' is for short.
+qty (float) An optional parameter. Number of contracts/shares/lots/units to trade. The default value is 'NaN'.
+limit (float) An optional parameter. Limit price of the order. If it is specified, the order type is either 'limit', or 'stop-limit'. 'NaN' should be specified for any other order type.
+stop (float) An optional parameter. Stop price of the order. If it is specified, the order type is either 'stop', or 'stop-limit'. 'NaN' should be specified for any other order type.
+oca_name (string) An optional parameter. Name of the OCA group the order belongs to. If the order should not belong to any particular OCA group, there should be an empty string.
+oca_type (string) An optional parameter. Type of the OCA group. The allowed values are: strategy.oca.none - the order should not belong to any particular OCA group; strategy.oca.cancel - the order should belong to an OCA group, where as soon as an order is filled, all other orders of the same group are cancelled; strategy.oca.reduce - the order should belong to an OCA group, where if X number of contracts of an order is filled, number of contracts for each other order of the same OCA group is decreased by X.
+comment (string) An optional parameter. Additional notes on the order.
+when (bool) An optional parameter. Condition of the order. The order is placed if condition is 'true'. If condition is 'false', nothing happens (the previously placed order with the same ID is not cancelled). Default value is 'true'.
+strategy.exit
+It is a command to exit either a specific entry, or whole market position. If an order with the same ID is already pending, it is possible to modify the order. If an entry order was not filled, but an exit order is generated, the exit order will wait till entry order is filled and then the exit order is placed. To deactivate an exit order, the command strategy.cancel or strategy.cancel_all should be used. If the function strategy.exit is called once, it exits a position only once. If you want to exit multiple times, the command strategy.exit should be called multiple times. If you use a stop loss and a trailing stop, their order type is 'stop', so only one of them is placed (the one that is supposed to be filled first). If all the following parameters 'profit', 'limit', 'loss', 'stop', 'trail_points', 'trail_offset' are 'NaN', the command will fail. To use market order to exit, the command strategy.close or strategy.close_all should be used.
+strategy.exit(id, from_entry, qty, qty_percent, profit, limit, loss, stop, trail_price, trail_points, trail_offset, oca_name, comment, when) → void
+EXAMPLE
+strategy(title = "simple strategy exit example")
+strategy.entry("long", true, 1, when = open > high[1]) // enter long by market if current open great then previous high
+strategy.exit("exit", "long", profit = 10, loss = 5) // generate full exit bracket (profit 10 points, loss 5 points per contract) from entry with name "long"
+ARGUMENTS
+id (string) A required parameter. The order identifier. It is possible to cancel or modify an order by referencing its identifier.
+from_entry (string) An optional parameter. The identifier of a specific entry order to exit from it. To exit all entries an empty string should be used. The default values is empty string.
+qty (float) An optional parameter. Number of contracts/shares/lots/units to exit a trade with. The default value is 'NaN'.
+qty_percent (float) An optional parameter. Defines the percentage of entered contracts/shares/lots/units to exit a trade with. When its value is not NaN, its priority is higher than that of the 'qty' parameter. Its value can range from 0 to 100. If 'qty' is NaN, the default value of 'qty_percent' is 100.
+profit (float) An optional parameter. Profit target (specified in ticks). If it is specified, a limit order is placed to exit market position when the specified amount of profit (in ticks) is reached. The default value is 'NaN'.
+limit (float) An optional parameter. Profit target (requires a specific price). If it is specified, a limit order is placed to exit market position at the specified price (or better). Priority of the parameter 'limit' is higher than priority of the parameter 'profit' ('limit' is used instead of 'profit', if its value is not 'NaN'). The default value is 'NaN'.
+loss (float) An optional parameter. Stop loss (specified in ticks). If it is specified, a stop order is placed to exit market position when the specified amount of loss (in ticks) is reached. The default value is 'NaN'.
+stop (float) An optional parameter. Stop loss (requires a specific price). If it is specified, a stop order is placed to exit market position at the specified price (or worse). Priority of the parameter 'stop' is higher than priority of the parameter 'loss' ('stop' is used instead of 'loss', if its value is not 'NaN'). The default value is 'NaN'.
+trail_price (float) An optional parameter. Trailing stop activation level (requires a specific price). If it is specified, a trailing stop order will be placed when the specified price level is reached. The offset (in ticks) to determine initial price of the trailing stop order is specified in the 'trail_offset' parameter: X ticks lower than activation level to exit long position; X ticks higher than activation level to exit short position. The default value is 'NaN'.
+trail_points (float) An optional parameter. Trailing stop activation level (profit specified in ticks). If it is specified, a trailing stop order will be placed when the calculated price level (specified amount of profit) is reached. The offset (in ticks) to determine initial price of the trailing stop order is specified in the 'trail_offset' parameter: X ticks lower than activation level to exit long position; X ticks higher than activation level to exit short position. The default value is 'NaN'.
+trail_offset (float) An optional parameter. Trailing stop price (specified in ticks). The offset in ticks to determine initial price of the trailing stop order: X ticks lower than 'trail_price' or 'trail_points' to exit long position; X ticks higher than 'trail_price' or 'trail_points' to exit short position. The default value is 'NaN'.
+oca_name (string) An optional parameter. Name of the OCA group (oca_type = strategy.oca.reduce) the profit target, the stop loss / the trailing stop orders belong to. If the name is not specified, it will be generated automatically.
+comment (string) An optional parameter. Additional notes on the order.
+when (bool) An optional parameter. Condition of the order. The order is placed if condition is 'true'. If condition is 'false', nothing happens (the previously placed order with the same ID is not cancelled). Default value is 'true'.
+strategy.order
+It is a command to place order. If an order with the same ID is already pending, it is possible to modify the order. If there is no order with the specified ID, a new order is placed. To deactivate order, the command strategy.cancel or strategy.cancel_all should be used. In comparison to the function strategy.entry, the function strategy.order is not affected by pyramiding. If both 'limit' and 'stop' parameters are 'NaN', the order type is market order.
+strategy.order(id, long, qty, limit, stop, oca_name, oca_type, comment, when) → void
+EXAMPLE
+strategy(title = "simple gap strategy example")
+strategy.order("buy", true, 1, when = open > high[1]) // buy by market if current open great then previous high
+strategy.order("sell", false, 1, when = open < low[1]) // sell by market if current open less then previous low
+ARGUMENTS
+id (string) A required parameter. The order identifier. It is possible to cancel or modify an order by referencing its identifier.
+long (bool) A required parameter. Order direction: 'true' or 'strategy.long' is for buy, 'false' or 'strategy.short' is for sell.
+qty (float) An optional parameter. Number of contracts/shares/lots/units to trade. The default value is 'NaN'.
+limit (float) An optional parameter. Limit price of the order. If it is specified, the order type is either 'limit', or 'stop-limit'. 'NaN' should be specified for any other order type.
+stop (float) An optional parameter. Stop price of the order. If it is specified, the order type is either 'stop', or 'stop-limit'. 'NaN' should be specified for any other order type.
+oca_name (string) An optional parameter. Name of the OCA group the order belongs to. If the order should not belong to any particular OCA group, there should be an empty string.
+oca_type (string) An optional parameter. Type of the OCA group. The allowed values are: strategy.oca.none - the order should not belong to any particular OCA group; strategy.oca.cancel - the order should belong to an OCA group, where as soon as an order is filled, all other orders of the same group are cancelled; strategy.oca.reduce - the order should belong to an OCA group, where if X number of contracts of an order is filled, number of contracts for each other order of the same OCA group is decreased by X.
+comment (string) An optional parameter. Additional notes on the order.
+when (bool) An optional parameter. Condition of the order. The order is placed if condition is 'true'. If condition is 'false', nothing happens (the previously placed order with the same ID is not cancelled). Default value is 'true'.
+strategy.risk.allow_entry_in
+The purpose of this rule is to forbid short entries, only long etries will be placed. The rule affects the following function: 'entry'.
+strategy.risk.allow_entry_in(value) → void
+EXAMPLE
+strategy("risk.long_only Demo")
+strategy.risk.allow_entry_in(strategy.direction.long) // There will be no short entries, only exits from long.
+strategy.entry("buy", true, when = open > close)
+strategy.entry("sell", false, when = open < close)
+ARGUMENTS
+value (string) To determine allowed market position direction, please specify one of the following values: strategy.direction.all (by default), strategy.direction.long, strategy.direction.short
+strategy.risk.max_cons_loss_days
+The purpose of this rule is to cancel all pending orders, close all open positions and stop placing orders after a specified number of consecutive days with losses. The rule affects the whole strategy.
+strategy.risk.max_cons_loss_days(count) → void
+EXAMPLE
+strategy("risk.max_cons_loss_days Demo 1")
+strategy.risk.max_cons_loss_days(3) // No orders will be placed after 3 days, if each day is with loss.
+// ...
+ARGUMENTS
+count (float) A required parameter. The allowed number of consecutive days with losses.
+strategy.risk.max_drawdown
+The purpose of this rule is to determine maximum drawdown. The rule affects the whole strategy. Once the maximum drawdown value is reached, all pending orders are cancelled, all open positions are closed and no new orders can be placed.
+strategy.risk.max_drawdown(value, type) → void
+EXAMPLE
+strategy("risk.max_drawdown Demo 1")
+strategy.risk.max_drawdown(50, strategy.percent_of_equity) // set maximum drawdown to 50% of maximum equity
+// ... 
+strategy("risk.max_drawdown Demo 2", currency = EUR)
+strategy.risk.max_drawdown(2000, strategy.cash)  // set maximum drawdown to 2000 EUR from maximum equity
+// ... 
+ARGUMENTS
+value (float) A required parameter. The maximum drawdown value. It is specified either in money (base currency), or in percentage of maximum equity. For % of equity the range of allowed values is from 0 to 100.
+type (string) A required parameter. The type of the value. Please specify one of the following values: strategy.percent_of_equity or strategy.cash. Note: if equity drops down to zero or to a negative and the 'strategy.percent_of_equity' is specified, all pending orders are cancelled, all open positions are closed and no new orders can be placed for good.
+strategy.risk.max_intraday_filled_orders
+The purpose of this rule is to determine maximum number of filled orders per 1 day (per 1 bar, if chart resolution is higher than 1 day). The rule affects the whole strategy. Once the maximum number of filled orders is reached, all pending orders are cancelled, all open positions are closed and no new orders can be placed till the end of the current trading session.
+strategy.risk.max_intraday_filled_orders(count) → void
+EXAMPLE
+strategy("risk.max_intraday_filled_orders Demo")
+strategy.risk.max_intraday_filled_orders(10) // After 10 orders are filled, no more strategy orders will be placed (except for a market order to exit current open market position, if there is any).
+strategy.entry("buy", true, when = open > close)
+strategy.entry("sell", false, when = open < close)
+ARGUMENTS
+count (float) A required parameter. The maximum number of filled orders per 1 day
+strategy.risk.max_intraday_loss
+The purpose of this rule is to determine maximum loss per 1 day (per 1 bar, if chart resolution is higher than 1 day). The rule affects the whole strategy. Once the maximum loss value is reached, all pending orders are cancelled, all open positions are closed and no new orders can be placed till the end of the current trading session.
+strategy.risk.max_intraday_loss(value, type) → void
+EXAMPLE
+strategy("risk.max_intraday_loss Demo 1")
+strategy.risk.max_intraday_loss(10, strategy.percent_of_equity) // set maximum intraday loss to 10% of maximum intraday equity
+// ... 
+strategy("risk.max_intraday_loss Demo 2", currency = EUR)
+strategy.risk.max_intraday_loss(100, strategy.cash) // set maximum intraday loss to 100 EUR from maximum intraday equity
+// ... 
+ARGUMENTS
+value (float) A required parameter. The maximum loss value. It is specified either in money (base currency), or in percentage of maximum intraday equity. For % of equity the range of allowed values is from 0 to 1 (where 1 = 100%).
+type (string) A required parameter. The type of the value. Please specify one of the following values: strategy.percent_of_equity or strategy.cash. Note: if equity drops down to zero or to a negative and the strategy.percent_of_equity is specified, all pending orders are cancelled, all open positions are closed and no new orders can be placed for good.
+strategy.risk.max_position_size
+The purpose of this rule is to determine maximum size of a market position. The rule affects the following function: strategy.entry. The 'entry' quantity can be reduced (if needed) to such number of contracts/shares/lots/units, so the total position size doesn't exceed the value specified in 'strategy.risk.max_position_size'. If minimum possible quantity still violates the rule, the order will not be placed.
+strategy.risk.max_position_size(contracts) → void
+EXAMPLE
+strategy("risk.max_position_size Demo", default_qty_value = 100)
+strategy.risk.max_position_size(10)
+strategy.entry("buy", true, when = open > close)
+plot(strategy.position_size)  // max plot value will be 10
+ARGUMENTS
+contracts (float) A required parameter. Maximum number of contracts/shares/lots/units in a position
+string
+Casts na to string
+string(x) → const string
+string(x) → input string
+string(x) → string
+string(x) → series[string]
+RETURNS
+The value of the argument after casting to string.
+SEE ALSO
+floatintboolcolorlinelabel
+study
+The function sets a number of study properties.
+study(title, shorttitle, overlay, format, precision, scale, max_bars_back, resolution) → void
+EXAMPLE
+study(title='MyScriptStudy')
+study(title="MyScriptStudy", shorttitle="MSS", precision=6, overlay=true)
+ARGUMENTS
+title (const string) study title that would be seen in Indicators widget. Argument IS REQUIRED.
+shorttitle (const string) study short title that would be seen in the chart legend. Argument is optional.
+overlay (const bool) if true the study will be added as an overlay for the main series. If false - it would be added on a separate chart pane. Default is false.
+format (const string) type of formatting study values on the price axis. Possible values are: format.inherit, format.price, format.volume. Default is format.inherit.
+precision (const integer) number of digits after the floating point for study values on the price axis. Must be a non negative integer and not greater than 16. If omitted, using formatting from parent series. If format is format.inherit and this argument is set, then format becomes format.price.
+scale (const integer) price scale that the indicator should be attached to. Possible values are: scale.right, scale.left, scale.none. Value scale.none can be applied only in combination with 'overlay=true' setting. If omitted, using scale from main series.
+max_bars_back (const integer) Maximum number of bars available for a study for historical reference. This parameter is applied to every built-in or user variable in the script if there is a reference to historical data of a variable in the script code (‘[]’ operator is used). Variable buffer sizes in the Pine Script are typically autodetected. This however is not possible in certain cases which is why the parameter allows a user to manually set the lower bound of this value. NOTE: using of the max_bars_back function instead of the parameter is optimal because it applies to only one variable.
+linktoseries (const bool) if true then the study will be always on the same pane and same price scale as the main series. Should be used only in combination with 'overlay=true'. Default is false.
+resolution (const string) custom resolution of the study, which defines study input and behavior like a study body in the security context. If you specify the empty string resolution, it will appear the same as on the chart. Argument is optional.
+REMARKS
+Every script must have one study call.
+Any function call with side effects will produce errors with the resolution param with any value
+SEE ALSO
+security
+sum
+The sum function returns the sliding sum of last y values of x.
+sum(source, length) → series[float]
+RETURNS
+Sum of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+cumfor
+supertrend
+The Supertrend Indicator. The Supertrend is a trend following indicator.
+supertrend(factor, atrPeriod) → [series[float], series[float]]
+EXAMPLE
+//@version=4
+study("Supertrend", overlay=true)
+mult = input(type=input.float, defval=4)
+len = input(type=input.integer, defval=14)
+[superTrend, dir] = supertrend(mult, len)
+colResistance = dir == 1 and dir == dir[1] ? color.new(color.red, 0) : color.new(color.red, 100)
+colSupport = dir == -1 and dir == dir[1] ? color.new(color.green, 0) : color.new(color.green, 100)
+plot(superTrend, color = colResistance, linewidth=2)
+plot(superTrend, color = colSupport, linewidth=2)
+RETURNS
+Tuple of two supertrend series: supertrend line and direction of trend. Possible values are 1 (up direction) and -1 (down direction).
+ARGUMENTS
+factor (series) The multiplier by which the ATR will get multiplied.
+atrPeriod (integer) Length of ATR.
+SEE ALSO
+macd
+swma
+Symmetrically weighted moving average with fixed length: 4. Weights: [1/6, 2/6, 2/6, 1/6].
+swma(x) → series[float]
+EXAMPLE
+plot(swma(close))
+
+// same on pine, but less efficient
+pine_swma(x) =>
+    x[3] * 1 / 6 + x[2] * 2 / 6 + x[1] * 2 / 6 + x[0] * 1 / 6
+plot(pine_swma(close))
+RETURNS
+Symmetrically weighted moving average
+ARGUMENTS
+x (series) Source series.
+SEE ALSO
+smaemarmawmavwmaalma
+tan
+The tan function returns the trigonometric tangent of an angle.
+tan(x) → float
+tan(x) → input float
+tan(x) → const float
+tan(x) → series[float]
+RETURNS
+The trigonometric tangent of an angle.
+ARGUMENTS
+x Angle, in radians.
+tickerid
+Creates a ticker identifier for requesting additional data for the script.
+tickerid(prefix, ticker, session, adjustment) → string
+EXAMPLE
+study("tickerid fun", overlay=true) 
+t = tickerid(syminfo.prefix, syminfo.ticker, session.regular, adjustment.splits)
+t2 = heikinashi(t)
+c = security(t2, timeframe.period, low, true)
+plot(c, style=plot.style_linebr)
+RETURNS
+String value of ticker id, that can be supplied to security function.
+ARGUMENTS
+prefix (string) Exchange prefix. For example: 'BATS', 'NYSE', 'NASDAQ'. Exchange prefix of main series is syminfo.prefix.
+ticker (string) Ticker name. For example 'AAPL', 'MSFT', 'EURUSD'. Ticker name of the main series is syminfo.ticker.
+session (string) Session type. Optional argument. Possible values: session.regular, session.extended. Session type of the current chart is syminfo.session. If session is not given, then syminfo.session value is used.
+adjustment (string) Adjustment type. Optional argument. Possible values: adjustment.none, adjustment.splits, adjustment.dividends. If adjustment is not given, then default adjustment value is used (can be different depending on particular instrument).
+REMARKS
+You may use return value of tickerid function as input argument for heikinashi, renko, linebreak, kagi, pointfigure functions.
+SEE ALSO
+syminfo.tickeridsyminfo.tickersyminfo.sessionsession.extendedsession.regularheikinashiadjustment.noneadjustment.splitsadjustment.dividends
+time
+Function time returns UNIX time of current bar for the specified resolution and session or NaN if time point is out-of-session.
+time(resolution, session) → series[integer]
+time(resolution) → series[integer]
+EXAMPLE
+//@version=4
+study("Time", overlay=true)
+// Try this on chart AAPL,1
+timeinrange(res, sess) => not na(time(res, sess)) ? 1 : 0
+plot(timeinrange("1", "1300-1400"), color=color.red)
+
+// This plots 1.0 at every start of 10 minute bar on a 1 minute chart:
+newbar(res) => change(time(res)) == 0 ? 0 : 1
+plot(newbar("10"))
+While setting up a session you can specify not just the hours and minutes but also the days of the week that will be included in that session.
+If the days aren't specified, the session is considered to have been set from Monday to Friday (Saturday and Sunday are excluded as the weekend days), i.e. "1100-2000" is the same as "1100-1200:23456".
+For example, on a symbol that is traded seven days a week with the 24-hour trading session the following script will not color Saturdays and Sundays:
+EXAMPLE
+//@version=4
+study("Time", overlay=true)
+t1 = time(timeframe.period, "0000-0000")
+bgcolor(t1 ? color.blue : na)
+You can change that by specifying the days:
+EXAMPLE
+//@version=4
+study("Time - days", overlay=true)
+t1 = time(timeframe.period, "0000-0000:1234567")
+bgcolor(t1 ? color.green : na)
+RETURNS
+UNIX time.
+ARGUMENTS
+resolution (string) Resolution.
+session (string) Session specification. Optional argument, session of the symbol used by default.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+time
+timestamp
+Function timestamp returns UNIX time of specified date and time.
+timestamp(year, month, day, hour, minute, second) → integer
+timestamp(timezone, year, month, day, hour, minute, second) → integer
+timestamp(year, month, day, hour, minute, second) → series[integer]
+timestamp(timezone, year, month, day, hour, minute, second) → series[integer]
+EXAMPLE
+//@version=4
+study("My Script")
+plot(timestamp(2016, 01, 19, 09, 30), linewidth=3, color=color.green)
+plot(timestamp(syminfo.timezone, 2016, 01, 19, 09, 30), color=color.blue)
+plot(timestamp(2016, 01, 19, 09, 30), color=color.yellow)
+plot(timestamp("GMT+6", 2016, 01, 19, 09, 30))
+plot(timestamp(2019, 06, 19, 09, 30, 15), color=color.lime)
+plot(timestamp("GMT+3", 2019, 06, 19, 09, 30, 15), color=color.fuchsia)
+RETURNS
+UNIX time.
+ARGUMENTS
+timezone (string) (Optional argument) Timezone
+year (integer) Year
+month (integer) Month
+day (integer) Day
+hour (integer) Hour
+minute (integer) Minute
+second (integer) (Optional argument) Second. Default is 0.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970. By default Timezone is syminfo.timezone, but it can be specified by GMT-notation (e.g "GMT-5", "GMT+5", "GMT+5:30", etc), or one of following values:
+"America/New_York"
+"America/Los_Angeles"
+"America/Chicago"
+"America/Phoenix"
+"America/Toronto"
+"America/Vancouver"
+"America/Argentina/Buenos_Aires"
+"America/El_Salvador"
+"America/Sao_Paulo"
+"America/Bogota"
+"Europe/Moscow"
+"Europe/Athens"
+"Europe/Berlin"
+"Europe/London"
+"Europe/Madrid"
+"Europe/Paris"
+"Europe/Warsaw"
+"Australia/Sydney"
+"Australia/Brisbane"
+"Australia/Adelaide"
+"Australia/ACT"
+"Asia/Almaty"
+"Asia/Ashkhabad"
+"Asia/Tokyo"
+"Asia/Taipei"
+"Asia/Singapore"
+"Asia/Shanghai"
+"Asia/Seoul"
+"Asia/Tehran"
+"Asia/Dubai"
+"Asia/Kolkata"
+"Asia/Hong_Kong"
+"Asia/Bangkok"
+"Pacific/Auckland"
+"Pacific/Chatham"
+"Pacific/Fakaofo"
+"Pacific/Honolulu"
+SEE ALSO
+timetimetimenowsyminfo.timezone
+tostring
+tostring(x) → series[string]
+tostring(x, y) → series[string]
+tostring(x) → string
+tostring(x, y) → string
+RETURNS
+String representation of x argument.
+ARGUMENTS
+x (float) Number that should be converted to string.
+y (string) Format string. Optional argument, default value is '#.##########'.
+REMARKS
+To display trailing zeros use 0 instead of a '#' symbol. For example, '#.000'.
+tr
+tr(handle_na) → series[float]
+RETURNS
+True range. It is max(high - low, abs(high - close[1]), abs(low - close[1]))
+ARGUMENTS
+handle_na (bool) How NaN values are handled. if true, and previous day's close is NaN then tr would be calculated as current day high-low. Otherwise (if false) tr would return NaN in such cases. Also note, that atr uses tr(true).
+REMARKS
+tr(false) is exactly the same as tr.
+SEE ALSO
+tratr
+tsi
+True strength index. It uses moving averages of the underlying momentum of a financial instrument.
+tsi(source, short_length, long_length) → series[float]
+RETURNS
+True strength index. A value in range [-1, 1]
+ARGUMENTS
+source (series) Source series.
+short_length (integer) Short length.
+long_length (integer) Long length.
+valuewhen
+Source series value when the condition was true on the n-th most recent occurrence.
+valuewhen(condition, source, occurrence) → series[float]
+valuewhen(condition, source, occurrence) → series[integer]
+EXAMPLE
+slow = sma(close, 7)
+fast = sma(close, 14)
+// get value of close on second cross occurrence
+valuewhen(cross(slow, fast), close, 1)
+RETURNS
+Source value when condition was true
+SEE ALSO
+lowesthighest
+variance
+Variance is the expectation of the squared deviation of a series from its mean (sma), and it informally measures how far a set of numbers are spread out from their mean.
+variance(source, length) → series[float]
+RETURNS
+Variance of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+REMARKS
+This is a biased estimation of sample variance.
+SEE ALSO
+devstdev
+vwap
+Volume weighted average price.
+vwap(x) → series[float]
+RETURNS
+Volume weighted average.
+ARGUMENTS
+x (series) Source series.
+SEE ALSO
+vwap
+vwma
+The vwma function returns volume-weighted moving average of x for y bars back. It is the same as: sma(x * volume, y) / sma(volume, y)
+vwma(source, length) → series[float]
+EXAMPLE
+plot(vwma(close, 15))
+
+// same on pine, but less efficient
+pine_vwma(x, y) =>
+    sma(x * volume, y) / sma(volume, y)
+plot(pine_vwma(close, 15))
+RETURNS
+Volume-weighted moving average of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+smaemarmawmaswmaalma
+weekofyear
+weekofyear(time) → series[integer]
+RETURNS
+Week of year (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+weekofyeartimeyearmonthdayofmonthdayofweekhourminutesecond
+wma
+The wma function returns weighted moving average of x for y bars back. In wma weighting factors decrease in arithmetical progression.
+wma(source, length) → series[float]
+EXAMPLE
+plot(wma(close, 15))
+
+// same on pine, but much less efficient
+pine_wma(x, y) =>
+    norm = 0.0
+    sum = 0.0
+    for i = 0 to y - 1
+        weight = (y - i) * y
+        norm := norm + weight
+        sum := sum + x[i] * weight
+    sum / norm
+plot(pine_wma(close, 15))
+RETURNS
+Weighted moving average of x for y bars back.
+ARGUMENTS
+source (series) Series of values to process.
+length (integer) Number of bars (length).
+SEE ALSO
+smaemarmavwmaswmaalma
+wpr
+Williams %R. The oscillator shows the current closing price in relation to the high and low of the past 'length' bars.
+wpr(length) → series[float]
+EXAMPLE
+//@version=4
+study("Williams %R", shorttitle="%R", format=format.price, precision=2)
+plot(wpr(14), title="%R", color=#ff6d00, transp=0)
+RETURNS
+Williams %R.
+ARGUMENTS
+length (integer) Number of bars.
+SEE ALSO
+mficmo
+year
+year(time) → series[integer]
+RETURNS
+Year (in exchange timezone) for provided UNIX time.
+ARGUMENTS
+time (series) UNIX time in milliseconds.
+REMARKS
+UNIX time is the number of milliseconds that have elapsed since 00:00:00 UTC, 1 January 1970.
+SEE ALSO
+yeartimemonthdayofmonthdayofweekhourminutesecond
